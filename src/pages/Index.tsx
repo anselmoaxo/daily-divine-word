@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen, Music, ScrollText, Church, Share2 } from "lucide-react";
-import { fetchLiturgia, type LiturgiaData } from "@/lib/liturgy-api";
+import { fetchLiturgia, inputValueToDate, type LiturgiaData } from "@/lib/liturgy-api";
 import LiturgyHeader from "@/components/liturgy/LiturgyHeader";
 import ReadingSection from "@/components/liturgy/ReadingSection";
 import LoadingSkeleton from "@/components/liturgy/LoadingSkeleton";
@@ -11,7 +11,10 @@ export default function Index() {
   const [liturgia, setLiturgia] = useState<LiturgiaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  });
   const [darkMode, setDarkMode] = useState(false);
 
   const load = useCallback(async (date: Date) => {
@@ -36,7 +39,10 @@ export default function Index() {
   }, [darkMode]);
 
   const handleDateChange = (date: Date) => setSelectedDate(date);
-  const handleToday = () => setSelectedDate(new Date());
+  const handleToday = () => {
+    const now = new Date();
+    setSelectedDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+  };
 
   const handleShare = async () => {
     const text = liturgia
@@ -70,37 +76,17 @@ export default function Index() {
         />
 
         <div className="space-y-6">
-          {/* Antífona de Entrada */}
-          {liturgia.antifonas?.entrada && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="liturgy-section"
-            >
-              <p className="liturgy-title mb-2">Antífona de Entrada</p>
-              <p className="font-body text-foreground/90 italic leading-relaxed">
-                {liturgia.antifonas.entrada}
-              </p>
-            </motion.div>
-          )}
+          {/* Evangelho — always open by default */}
+          <ReadingSection
+            icon={<Church size={20} />}
+            label="Evangelho"
+            readings={leituras.evangelho}
+            highlight
+            defaultOpen
+            index={0}
+          />
 
-          {/* Oração da Coleta */}
-          {liturgia.oracoes.coleta && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.05 }}
-              className="liturgy-section"
-            >
-              <p className="liturgy-title mb-2">Oração da Coleta</p>
-              <p className="font-body text-foreground/90 leading-relaxed">
-                {liturgia.oracoes.coleta}
-              </p>
-            </motion.div>
-          )}
-
-          {/* Primeira Leitura */}
+          {/* Other readings — collapsed by default */}
           <ReadingSection
             icon={<BookOpen size={20} />}
             label="Primeira Leitura"
@@ -108,7 +94,6 @@ export default function Index() {
             index={1}
           />
 
-          {/* Salmo */}
           <ReadingSection
             icon={<Music size={20} />}
             label="Salmo Responsorial"
@@ -116,21 +101,11 @@ export default function Index() {
             index={2}
           />
 
-          {/* Segunda Leitura */}
           <ReadingSection
             icon={<ScrollText size={20} />}
             label="Segunda Leitura"
             readings={leituras.segundaLeitura}
             index={3}
-          />
-
-          {/* Evangelho */}
-          <ReadingSection
-            icon={<Church size={20} />}
-            label="Evangelho"
-            readings={leituras.evangelho}
-            highlight
-            index={4}
           />
 
           {/* Leituras Extras */}
@@ -139,47 +114,80 @@ export default function Index() {
               icon={<BookOpen size={20} />}
               label="Leituras Extras"
               readings={leituras.extras}
-              index={5}
+              index={4}
             />
           )}
 
-          {/* Orações */}
-          {(liturgia.oracoes.oferendas || liturgia.oracoes.comunhao) && (
-            <motion.div
+          {/* Orações — collapsed */}
+          {(liturgia.oracoes.coleta || liturgia.oracoes.oferendas || liturgia.oracoes.comunhao) && (
+            <motion.details
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="liturgy-section"
+              className="liturgy-section group"
             >
-              <p className="liturgy-title mb-4">Orações</p>
-              {liturgia.oracoes.oferendas && (
-                <div className="mb-4">
-                  <p className="text-sm font-semibold text-accent font-ui mb-1">Sobre as Oferendas</p>
-                  <p className="font-body text-foreground/90 leading-relaxed">{liturgia.oracoes.oferendas}</p>
-                </div>
-              )}
-              {liturgia.oracoes.comunhao && (
-                <div>
-                  <p className="text-sm font-semibold text-accent font-ui mb-1">Após a Comunhão</p>
-                  <p className="font-body text-foreground/90 leading-relaxed">{liturgia.oracoes.comunhao}</p>
-                </div>
-              )}
-            </motion.div>
+              <summary className="cursor-pointer flex items-center justify-between list-none font-ui">
+                <span className="liturgy-title">Orações</span>
+                <span className="text-muted-foreground transition-transform group-open:rotate-180">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </summary>
+              <div className="mt-5 space-y-6">
+                {liturgia.oracoes.coleta && (
+                  <div>
+                    <p className="text-sm font-semibold text-accent font-ui mb-2">Oração da Coleta</p>
+                    <p className="font-body text-foreground/90 leading-[1.9]">{liturgia.oracoes.coleta}</p>
+                  </div>
+                )}
+                {liturgia.oracoes.oferendas && (
+                  <div>
+                    <p className="text-sm font-semibold text-accent font-ui mb-2">Sobre as Oferendas</p>
+                    <p className="font-body text-foreground/90 leading-[1.9]">{liturgia.oracoes.oferendas}</p>
+                  </div>
+                )}
+                {liturgia.oracoes.comunhao && (
+                  <div>
+                    <p className="text-sm font-semibold text-accent font-ui mb-2">Após a Comunhão</p>
+                    <p className="font-body text-foreground/90 leading-[1.9]">{liturgia.oracoes.comunhao}</p>
+                  </div>
+                )}
+              </div>
+            </motion.details>
           )}
 
-          {/* Antífona de Comunhão */}
-          {liturgia.antifonas?.comunhao && (
-            <motion.div
+          {/* Antífonas — collapsed */}
+          {(liturgia.antifonas?.entrada || liturgia.antifonas?.comunhao) && (
+            <motion.details
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.55 }}
-              className="liturgy-section"
+              className="liturgy-section group"
             >
-              <p className="liturgy-title mb-2">Antífona de Comunhão</p>
-              <p className="font-body text-foreground/90 italic leading-relaxed">
-                {liturgia.antifonas.comunhao}
-              </p>
-            </motion.div>
+              <summary className="cursor-pointer flex items-center justify-between list-none font-ui">
+                <span className="liturgy-title">Antífonas</span>
+                <span className="text-muted-foreground transition-transform group-open:rotate-180">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </summary>
+              <div className="mt-5 space-y-5">
+                {liturgia.antifonas?.entrada && (
+                  <div>
+                    <p className="text-sm font-semibold text-accent font-ui mb-2">Entrada</p>
+                    <p className="font-body text-foreground/90 italic leading-[1.9]">{liturgia.antifonas.entrada}</p>
+                  </div>
+                )}
+                {liturgia.antifonas?.comunhao && (
+                  <div>
+                    <p className="text-sm font-semibold text-accent font-ui mb-2">Comunhão</p>
+                    <p className="font-body text-foreground/90 italic leading-[1.9]">{liturgia.antifonas.comunhao}</p>
+                  </div>
+                )}
+              </div>
+            </motion.details>
           )}
         </div>
 

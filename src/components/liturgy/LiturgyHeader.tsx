@@ -1,5 +1,5 @@
-import { Cross, Calendar, Sun, Moon } from "lucide-react";
-import { getLiturgicalColorClass, formatPortugueseDate } from "@/lib/liturgy-api";
+import { Cross, Calendar, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+import { getLiturgicalColorClass, formatPortugueseDate, dateToInputValue, inputValueToDate } from "@/lib/liturgy-api";
 import { motion } from "framer-motion";
 
 interface Props {
@@ -15,7 +15,13 @@ interface Props {
 
 export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDateChange, onToday, darkMode, onToggleDark }: Props) {
   const colorClasses = getLiturgicalColorClass(cor);
-  const inputDate = selectedDate.toISOString().split("T")[0];
+  const inputDate = dateToInputValue(selectedDate);
+
+  const goDay = (offset: number) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + offset);
+    onDateChange(d);
+  };
 
   return (
     <motion.header
@@ -60,14 +66,34 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
 
       {/* Date controls */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 font-ui">
-        <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-          <input
-            type="date"
-            value={inputDate}
-            onChange={(e) => onDateChange(new Date(e.target.value + "T12:00:00"))}
-            className="pl-10 pr-4 py-2 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => goDay(-1)}
+            className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+            aria-label="Dia anterior"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <input
+              type="date"
+              value={inputDate}
+              onChange={(e) => {
+                if (e.target.value) {
+                  onDateChange(inputValueToDate(e.target.value));
+                }
+              }}
+              className="pl-10 pr-4 py-2 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <button
+            onClick={() => goDay(1)}
+            className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+            aria-label="Próximo dia"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
         <button
           onClick={onToday}

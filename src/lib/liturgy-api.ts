@@ -35,11 +35,32 @@ export interface LiturgiaData {
   };
 }
 
+/**
+ * Converts a Date to dd/mm/yyyy string for the API
+ */
 function formatDateForApi(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+/**
+ * Converts a yyyy-mm-dd string (from input[type=date]) to a local Date
+ */
+export function inputValueToDate(value: string): Date {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * Converts a Date to yyyy-mm-dd for input[type=date]
+ */
+export function dateToInputValue(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export async function fetchLiturgia(date?: Date): Promise<LiturgiaData> {
