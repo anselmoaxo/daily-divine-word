@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      liturgias: {
+        Row: {
+          antifonas: Json | null
+          cor: string
+          created_at: string
+          data: string
+          id: string
+          leituras: Json
+          liturgia: string
+          oracoes: Json
+          updated_at: string
+        }
+        Insert: {
+          antifonas?: Json | null
+          cor?: string
+          created_at?: string
+          data: string
+          id?: string
+          leituras?: Json
+          liturgia: string
+          oracoes?: Json
+          updated_at?: string
+        }
+        Update: {
+          antifonas?: Json | null
+          cor?: string
+          created_at?: string
+          data?: string
+          id?: string
+          leituras?: Json
+          liturgia?: string
+          oracoes?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
