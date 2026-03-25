@@ -122,24 +122,77 @@
 }
 
 @layer components {
-  .liturgy-section {
-    @apply bg-card rounded-lg border border-border p-6 md:p-8;
+  /* CNBB-style clean layout */
+  .cnbb-section {
+    @apply py-8 border-b border-border;
   }
 
-  .liturgy-verse {
-    @apply leading-relaxed text-base md:text-lg;
-    text-indent: 0;
+  .cnbb-section:last-of-type {
+    @apply border-b-0;
   }
 
-  .liturgy-verse p {
-    @apply mb-3;
+  .cnbb-section-title {
+    @apply text-center font-display text-xl md:text-2xl font-bold tracking-wide mb-4;
+    color: hsl(var(--primary));
+    letter-spacing: 0.08em;
   }
 
-  .liturgy-refrain {
-    @apply text-primary font-semibold italic text-center py-3 text-lg md:text-xl;
-    font-family: 'Crimson Text', serif;
+  .cnbb-antiphon {
+    @apply text-right font-body text-base md:text-lg text-foreground/80 mb-4 italic;
   }
 
+  .cnbb-ref-inline {
+    color: hsl(var(--primary));
+    font-weight: 400;
+  }
+
+  .cnbb-verse-block {
+    @apply flex gap-0 mb-1;
+    padding-left: 2.5rem;
+    position: relative;
+  }
+
+  .cnbb-verse-num {
+    @apply absolute left-0 font-ui text-sm font-medium select-none;
+    color: hsl(var(--primary));
+    width: 2rem;
+    text-align: right;
+    padding-top: 0.15rem;
+  }
+
+  .cnbb-verse-text {
+    @apply font-body text-foreground/90 leading-[1.75] text-base md:text-lg;
+  }
+
+  .cnbb-verse-no-num {
+    @apply ml-0;
+    padding-left: 0;
+  }
+
+  .cnbb-text-body {
+    @apply max-w-[700px];
+  }
+
+  .cnbb-refrain {
+    @apply my-6 pl-0;
+    color: hsl(var(--primary));
+  }
+
+  .cnbb-refrain p {
+    @apply font-body text-base md:text-lg italic;
+  }
+
+  .cnbb-btn {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded border border-border
+           text-muted-foreground bg-card hover:bg-secondary text-xs font-ui transition-colors;
+  }
+
+  .cnbb-prayer-label {
+    @apply font-ui text-sm font-semibold mb-2 uppercase tracking-wide;
+    color: hsl(var(--primary));
+  }
+
+  /* Legacy classes kept for header */
   .liturgy-reference {
     @apply text-sm font-medium tracking-wide uppercase;
     color: hsl(var(--accent));
@@ -161,76 +214,7 @@
     @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase;
     font-family: 'Inter', sans-serif;
   }
-
-  /* Gospel Section */
-  .gospel-section {
-    @apply bg-card rounded-xl border border-border shadow-md;
-    border-color: hsl(var(--gold) / 0.3);
-    box-shadow: 0 4px 24px -4px hsl(var(--gold) / 0.08), 0 1px 3px hsl(var(--border));
-  }
-
-  .gospel-top-bar {
-    @apply h-1 w-full;
-    background: linear-gradient(90deg, hsl(var(--wine)), hsl(var(--gold)), hsl(var(--wine)));
-  }
-
-  .gospel-divider {
-    @apply w-24 h-px mx-auto my-5;
-    background: linear-gradient(90deg, transparent, hsl(var(--gold)), transparent);
-  }
-
-  .gospel-reference {
-    @apply inline-block px-4 py-1.5 rounded-full text-sm font-medium tracking-wide;
-    font-family: 'Inter', sans-serif;
-    background: hsl(var(--gold) / 0.1);
-    color: hsl(var(--accent));
-    border: 1px solid hsl(var(--gold) / 0.2);
-  }
-
-  .gospel-control-btn {
-    @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-muted-foreground
-           border border-border bg-card hover:bg-secondary hover:text-foreground
-           transition-all duration-200 text-xs;
-    font-family: 'Inter', sans-serif;
-  }
-
-  .gospel-control-active {
-    @apply bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground;
-  }
-
-  .gospel-text-container {
-    @apply max-w-[700px] mx-auto;
-  }
-
-  .gospel-paragraph {
-    @apply font-body text-foreground/90 mb-5 leading-[1.8] md:leading-[1.85];
-    text-align: justify;
-    text-justify: inter-word;
-    transition: background 0.2s;
-    @apply px-3 py-2 rounded-lg;
-  }
-
-  .gospel-paragraph:hover {
-    background: hsl(var(--gold) / 0.04);
-  }
-
-  .gospel-reading-mode {
-    @apply bg-background border-transparent shadow-none;
-  }
-
-  .gospel-reading-mode .gospel-text-container {
-    @apply max-w-[600px];
-  }
-
-  .gospel-reading-mode .gospel-paragraph {
-    @apply leading-[2] text-lg md:text-xl;
-  }
 }
-
-@layer utilities {
-  .font-display {
-    font-family: 'Crimson Text', serif;
-  }
 
   .font-body {
     font-family: 'Lora', serif;

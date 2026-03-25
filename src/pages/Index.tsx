@@ -78,7 +78,15 @@ export default function Index() {
           onToggleDark={() => setDarkMode(!darkMode)}
         />
 
-        {/* Readings with fade transition */}
+        {/* Leituras index - CNBB style */}
+        <div className="mb-8 text-sm font-ui text-muted-foreground">
+          <p className="font-semibold mb-1">Leituras:</p>
+          {leituras.primeiraLeitura.length > 0 && <p>{leituras.primeiraLeitura[0].referencia}</p>}
+          {leituras.salmo.length > 0 && <p>{leituras.salmo[0].referencia}</p>}
+          {leituras.segundaLeitura.length > 0 && <p>{leituras.segundaLeitura[0].referencia}</p>}
+          {leituras.evangelho.length > 0 && <p>{leituras.evangelho[0].referencia}</p>}
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={liturgia.data}
@@ -86,15 +94,8 @@ export default function Index() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="space-y-5"
           >
-            {/* Evangelho — dedicated component */}
-            <GospelSection
-              readings={leituras.evangelho}
-              index={0}
-            />
-
-            {/* Other readings — collapsed */}
+            {/* Primeira Leitura */}
             <ReadingCard
               icon={<BookOpen size={20} />}
               label="Primeira Leitura"
@@ -102,6 +103,7 @@ export default function Index() {
               index={1}
             />
 
+            {/* Salmo */}
             <ReadingCard
               icon={<Music size={20} />}
               label="Salmo Responsorial"
@@ -109,6 +111,7 @@ export default function Index() {
               index={2}
             />
 
+            {/* Segunda Leitura */}
             <ReadingCard
               icon={<ScrollText size={20} />}
               label="Segunda Leitura"
@@ -116,6 +119,7 @@ export default function Index() {
               index={3}
             />
 
+            {/* Extras */}
             {leituras.extras && leituras.extras.length > 0 && (
               <ReadingCard
                 icon={<BookOpen size={20} />}
@@ -125,12 +129,16 @@ export default function Index() {
               />
             )}
 
-            <PrayersSection oracoes={liturgia.oracoes} index={5} />
-            <AntiphonsSection antifonas={liturgia.antifonas || {}} index={6} />
+            {/* Evangelho */}
+            <GospelSection readings={leituras.evangelho} index={5} />
+
+            {/* Orações e Antífonas */}
+            <PrayersSection oracoes={liturgia.oracoes} index={6} />
+            <AntiphonsSection antifonas={liturgia.antifonas || {}} index={7} />
           </motion.div>
         </AnimatePresence>
 
-        {/* Share button */}
+        {/* Share */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -139,7 +147,7 @@ export default function Index() {
         >
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-secondary text-secondary-foreground hover:bg-muted transition-colors font-ui text-sm"
+            className="cnbb-btn gap-2 px-5 py-2.5"
           >
             <Share2 size={16} />
             Compartilhar
@@ -149,8 +157,9 @@ export default function Index() {
         {/* Footer */}
         <footer className="text-center mt-12 pb-8">
           <div className="gold-divider" />
-          <p className="font-ui text-xs text-muted-foreground mt-4">
-            Dados fornecidos pela API Liturgia Diária • Ad Maiorem Dei Gloriam
+          <p className="font-ui text-xs text-muted-foreground mt-4 italic">
+            Conferência Nacional dos Bispos do Brasil<br />
+            © Todos os direitos reservados.
           </p>
         </footer>
       </div>

@@ -1,5 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 import { useState } from "react";
 
 interface Props {
@@ -17,50 +16,31 @@ export default function AntiphonsSection({ antifonas, index }: Props) {
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className="bg-card rounded-xl border border-border overflow-hidden shadow-sm"
+      className="cnbb-section"
     >
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-3 p-5 md:p-6 text-left hover:bg-secondary/30 transition-colors"
-        aria-expanded={open}
-      >
-        <span className="liturgy-title">Antífonas</span>
-        <ChevronDown
-          size={18}
-          className={`text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-        />
+      <button onClick={() => setOpen(!open)} className="w-full text-left" aria-expanded={open}>
+        <h2 className="cnbb-section-title">ANTÍFONAS</h2>
       </button>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="antiphons"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <div className="px-5 pb-6 md:px-6 md:pb-8 space-y-5">
-              {antifonas.entrada && (
-                <div>
-                  <p className="text-sm font-semibold text-accent font-ui mb-2">Entrada</p>
-                  <p className="font-body text-foreground/90 italic leading-[1.9]">{antifonas.entrada}</p>
-                </div>
-              )}
-              {antifonas.comunhao && (
-                <div>
-                  <p className="text-sm font-semibold text-accent font-ui mb-2">Comunhão</p>
-                  <p className="font-body text-foreground/90 italic leading-[1.9]">{antifonas.comunhao}</p>
-                </div>
-              )}
+      {open && (
+        <div className="mt-4 space-y-5">
+          {antifonas.entrada && (
+            <div>
+              <p className="cnbb-prayer-label">Entrada</p>
+              <p className="font-body text-foreground/90 italic leading-[1.8]">{antifonas.entrada}</p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+          {antifonas.comunhao && (
+            <div>
+              <p className="cnbb-prayer-label">Comunhão</p>
+              <p className="font-body text-foreground/90 italic leading-[1.8]">{antifonas.comunhao}</p>
+            </div>
+          )}
+        </div>
+      )}
     </motion.section>
   );
 }

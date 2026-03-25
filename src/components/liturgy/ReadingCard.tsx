@@ -1,8 +1,6 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import type { LeituraItem } from "@/lib/liturgy-api";
-import VerseList from "./Verse";
 
 interface Props {
   icon: ReactNode;
@@ -13,98 +11,111 @@ interface Props {
   index: number;
 }
 
-export default function ReadingCard({ icon, label, readings, highlight, defaultOpen = false, index }: Props) {
-  const [copied, setCopied] = useState(false);
-  const [open, setOpen] = useState(defaultOpen);
+/** Parse text into verse segments with numbers */
+function parseVerses(raw: string): { num: string; text: string }[] {
+  if (!raw) return [];
+  let processed = raw.replace(/(\d{1,3})([a-záàâãéèêíïóôõúüçA-ZÁÀÂÃÉÈÊÍÏÓÔÕÚÜÇ""])/g, "\n$1 $2");
+  processed = processed.replace(/(\d{1,2},\d{1,2})([a-záàâãéèêíïóôõúüç])/g, "\n$1 $2");
+  const lines = processed.split("\n").filter((l) => l.trim());
+  const verses: { num: string; text: string }[] = [];
+  for (const line of lines) {
+    const match = line.trim().match(/^(\d{1,3}(?:,\d{1,2})?)\s+(.*)$/);
+    if (match) {
+      verses.push({ num: match[1], text: match[2].trim() });
+    } else if (verses.length > 0) {
+      verses[verses.length - 1].text += " " + line.trim();
+    } else {
+      verses.push({ num: "", text: line.trim() });
+    }
+  }
+  return verses;
+}
+
+function splitIntoLines(text: string): string[] {
+  const parts = text.split(/(?<=[.;!?])\s+|(?<=[""])\s+/);
+  return parts.filter(Boolean).map((p) => p.trim());
+}
+
+export default function ReadingCard({ label, readings, index }: Props) {
+  const [open, setOpen] = useState(true);
 
   if (!readings || readings.length === 0) return null;
 
-  const allText = readings.map(r => `${r.referencia}\n${r.titulo || ""}\n${r.texto}`).join("\n\n");
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await navigator.clipboard.writeText(allText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Map label to CNBB-style title
+  const sectionTitle = (() => {
+    const l = label.toLowerCase();
+    if (l.includes("primeira")) return "PRIMEIRA LEITURA";
+    if (l.includes("segunda")) return "SEGUNDA LEITURA";
+    if (l.includes("salmo")) return "SALMO RESPONSORIAL";
+    if (l.includes("extra")) return "LEITURAS EXTRAS";
+    return label.toUpperCase();
+  })();
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className={`bg-card rounded-xl border border-border overflow-hidden transition-shadow duration-300 ${
-        highlight ? "border-accent/30 shadow-md ring-1 ring-accent/10" : "shadow-sm"
-      }`}
-      aria-label={`Seção: ${label}`}
+      className="cnbb-section"
     >
-      {/* Header */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-3 p-5 md:p-6 text-left hover:bg-secondary/30 transition-colors"
+        className="w-full text-left"
         aria-expanded={open}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-accent flex-shrink-0">{icon}</span>
-          <div>
-            <span className="liturgy-title block">{label}</span>
-            {!open && readings.length > 0 && (
-              <span className="liturgy-reference text-xs mt-0.5 block">{readings[0].referencia}</span>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span
-            role="button"
-            onClick={handleCopy}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            title="Copiar texto completo"
-          >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-          </span>
-          <ChevronDown
-            size={18}
-            className={`text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-          />
-        </div>
+        <h2 className="cnbb-section-title">{sectionTitle}</h2>
       </button>
 
-      {/* Content */}
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <div className="px-5 pb-6 md:px-6 md:pb-8">
-              {readings.map((reading, i) => (
-                <div key={i} className={readings.length > 1 && i > 0 ? "mt-8 pt-8 border-t border-border" : ""}>
-                  <p className="liturgy-reference mb-2">{reading.referencia}</p>
-                  {reading.titulo && (
-                    <p className="font-display text-sm text-muted-foreground italic mb-4">{reading.titulo}</p>
-                  )}
+      {open && readings.map((reading, i) => (
+        <div key={i} className={i > 0 ? "mt-8 pt-6 border-t border-border" : ""}>
+          {/* Antiphon / theme */}
+          {reading.titulo && (
+            <p className="cnbb-antiphon">
+              <em>{reading.titulo}</em>
+            </p>
+          )}
 
-                  {/* Refrain for psalms */}
-                  {reading.refrao && (
-                    <div className="my-5 px-4 py-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
-                      <span className="font-display text-lg md:text-xl text-accent font-semibold italic">
-                        ℟ {reading.refrao}
-                      </span>
-                    </div>
-                  )}
+          {/* Reference */}
+          <p className="font-body text-foreground text-base mb-4">
+            {reading.titulo ? "" : "Leitura "}{" "}
+            <span className="cnbb-ref-inline">{reading.referencia}</span>
+          </p>
 
-                  {/* Verses */}
-                  <VerseList text={reading.texto} />
-                </div>
-              ))}
+          {/* Refrain for psalms */}
+          {reading.refrao && (
+            <div className="cnbb-refrain">
+              <p className="font-body font-semibold">
+                — {reading.refrao}
+              </p>
+              <p className="font-body font-bold mt-2">
+                — {reading.refrao}
+              </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+
+          {/* Verses in CNBB style */}
+          <div className="cnbb-text-body">
+            {parseVerses(reading.texto).map((verse, vi) => (
+              <div key={vi} className="cnbb-verse-block">
+                {verse.num && <span className="cnbb-verse-num">{verse.num}</span>}
+                <div className={verse.num ? "cnbb-verse-text" : "cnbb-verse-text cnbb-verse-no-num"}>
+                  {splitIntoLines(verse.text).map((line, j) => (
+                    <span key={j} className="block">{line}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Closing for readings */}
+          {!label.toLowerCase().includes("salmo") && (
+            <div className="mt-6">
+              <p className="font-body text-foreground text-base">— Palavra do Senhor.</p>
+              <p className="font-body text-foreground text-base font-semibold mt-1">— Graças a Deus.</p>
+            </div>
+          )}
+        </div>
+      ))}
     </motion.section>
   );
 }
