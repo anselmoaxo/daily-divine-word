@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { BookOpen, Music, ScrollText, Church, Share2 } from "lucide-react";
+import { BookOpen, Music, ScrollText, Share2 } from "lucide-react";
 import { fetchLiturgia, type LiturgiaData } from "@/lib/liturgy-api";
 import LiturgyHeader from "@/components/liturgy/LiturgyHeader";
 import ReadingCard from "@/components/liturgy/ReadingCard";
+import GospelSection from "@/components/liturgy/GospelSection";
 import PrayersSection from "@/components/liturgy/PrayersSection";
 import AntiphonsSection from "@/components/liturgy/AntiphonsSection";
 import LoadingSkeleton from "@/components/liturgy/LoadingSkeleton";
@@ -87,13 +88,9 @@ export default function Index() {
             transition={{ duration: 0.3 }}
             className="space-y-5"
           >
-            {/* Evangelho — always open */}
-            <ReadingCard
-              icon={<Church size={20} />}
-              label="Evangelho"
+            {/* Evangelho — dedicated component */}
+            <GospelSection
               readings={leituras.evangelho}
-              highlight
-              defaultOpen
               index={0}
             />
 
