@@ -66,8 +66,10 @@ export function dateToInputValue(date: Date): string {
 export async function fetchLiturgia(date?: Date): Promise<LiturgiaData> {
   let url = `${BASE_URL}/`;
   if (date) {
-    const formatted = formatDateForApi(date);
-    url = `${BASE_URL}/?date=${formatted}`;
+    const dia = String(date.getDate()).padStart(2, "0");
+    const mes = String(date.getMonth() + 1).padStart(2, "0");
+    const ano = date.getFullYear();
+    url = `${BASE_URL}/?dia=${dia}&mes=${mes}&ano=${ano}`;
   }
 
   const res = await fetch(url);
