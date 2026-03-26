@@ -1,6 +1,16 @@
-import { Calendar, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
-import { getLiturgicalColorClass, formatPortugueseDate, dateToInputValue, inputValueToDate } from "@/lib/liturgy-api";
+import { Calendar as CalendarIcon, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+import { getLiturgicalColorClass, formatPortugueseDate } from "@/lib/liturgy-api";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Props {
   data: string;
@@ -31,14 +41,11 @@ const Crucifix = () => (
 
 export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDateChange, darkMode, onToggleDark }: Props) {
   const colorClasses = getLiturgicalColorClass(cor);
-  const inputDate = dateToInputValue(selectedDate);
   const formattedDate = formatPortugueseDate(data);
 
   const handleNavigate = (days: number) => {
-    // Criamos uma nova data baseada na data selecionada atual
     const newDate = new Date(selectedDate.getTime());
     newDate.setDate(newDate.getDate() + days);
-    // Garantimos que a hora seja zerada para evitar problemas de fuso horário
     newDate.setHours(0, 0, 0, 0);
     onDateChange(newDate);
   };
@@ -114,15 +121,35 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
           </button>
         </div>
 
-        <div className="relative group">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={14} />
-          <input
-            type="date"
-            value={inputDate}
-            onChange={(e) => e.target.value && onDateChange(inputValueToDate(e.target.value))}
-            className="pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:ring-1 focus:ring-gold outline-none transition-all cursor-pointer"
-          />
-        </div>
+        {/* Modern Calendar Picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "w-[240px] justify-start text-left font-normal border-border bg-card hover:bg-secondary/50 transition-all",
+                !selectedDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4 text-gold" />
+              {selectedDate ? (
+                format(selectedDate, "PPP", { locale: ptBR })
+              ) : (
+                <span>Selecione uma data</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 border-border shadow-xl" align="center">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && onDateChange(date)}
+              initialFocus
+              locale={ptBR}
+              className="bg-card"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
     </header>
   );
