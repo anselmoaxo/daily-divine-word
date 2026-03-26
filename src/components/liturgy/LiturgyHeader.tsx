@@ -24,18 +24,29 @@ interface Props {
 
 const Crucifix = () => (
   <svg 
-    width="28" 
-    height="28" 
-    viewBox="0 0 24 24" 
+    width="32" 
+    height="40" 
+    viewBox="0 0 24 32" 
     fill="none" 
     stroke="currentColor" 
-    strokeWidth="1.5" 
+    strokeWidth="1.2" 
     strokeLinecap="round" 
     strokeLinejoin="round" 
-    className="crucifix-svg mx-auto mb-3"
+    className="crucifix-svg mx-auto mb-4 text-gold"
   >
-    <path d="M12 2v20M8 7h8" />
-    <path d="M12 7v0" />
+    {/* Haste Vertical Principal */}
+    <path d="M12 2v28" />
+    {/* Haste Horizontal (Patibulum) */}
+    <path d="M6 10h12" />
+    {/* Placa INRI (Titulus Crucis) */}
+    <path d="M10 4h4" className="opacity-60" />
+    {/* Base (Gólgota) */}
+    <path d="M9 30h6" strokeWidth="1" />
+    {/* Detalhes das extremidades (Estilo Trevo/Botão) */}
+    <circle cx="12" cy="2" r="0.5" fill="currentColor" />
+    <circle cx="6" cy="10" r="0.5" fill="currentColor" />
+    <circle cx="18" cy="10" r="0.5" fill="currentColor" />
+    <circle cx="12" cy="30" r="0.5" fill="currentColor" />
   </svg>
 );
 
