@@ -35,9 +35,18 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
   const formattedDate = formatPortugueseDate(data);
 
   const handleNavigate = (days: number) => {
-    const newDate = new Date(selectedDate);
+    // Criamos uma nova data baseada na data selecionada atual
+    const newDate = new Date(selectedDate.getTime());
     newDate.setDate(newDate.getDate() + days);
+    // Garantimos que a hora seja zerada para evitar problemas de fuso horário
+    newDate.setHours(0, 0, 0, 0);
     onDateChange(newDate);
+  };
+
+  const handleToday = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    onDateChange(today);
   };
 
   return (
@@ -95,7 +104,7 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
             <ChevronLeft size={16} /> Ontem
           </button>
           <button 
-            onClick={() => onDateChange(new Date())} 
+            onClick={handleToday} 
             className="nav-btn bg-gold text-white hover:bg-gold/80"
           >
             Hoje
