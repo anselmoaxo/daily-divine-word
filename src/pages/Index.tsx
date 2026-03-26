@@ -60,7 +60,6 @@ export default function Index() {
         toast.success("Link copiado para a área de transferência! ✨");
       }
     } catch (err) {
-      // Usuário cancelou o compartilhamento ou erro silencioso
       console.log("Erro ao compartilhar:", err);
     }
   };
@@ -90,35 +89,29 @@ export default function Index() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            {/* 1. Primeira Leitura */}
             <ReadingCard
               label="Primeira Leitura"
               readings={liturgia.leituras.primeiraLeitura}
               index={1}
             />
 
-            {/* 2. Salmo */}
             <ReadingCard
               label="Salmo Responsorial"
               readings={liturgia.leituras.salmo}
               index={2}
             />
 
-            {/* 3. Segunda Leitura (se houver) */}
             <ReadingCard
               label="Segunda Leitura"
               readings={liturgia.leituras.segundaLeitura}
               index={3}
             />
 
-            {/* 4. Evangelho (Destaque) */}
             <GospelSection readings={liturgia.leituras.evangelho} index={4} />
 
-            {/* 5. Orações e Antífonas */}
             <PrayersSection oracoes={liturgia.oracoes} index={5} />
             <AntiphonsSection antifonas={liturgia.antifonas || {}} index={6} />
 
-            {/* 6. Santo do Dia */}
             {liturgia.santo && (
               <section className="cnbb-section">
                 <h2 className="cnbb-section-title">SANTO DO DIA</h2>
@@ -128,7 +121,6 @@ export default function Index() {
               </section>
             )}
 
-            {/* 7. Reflexão */}
             {liturgia.reflexao && (
               <section className="cnbb-section">
                 <h2 className="cnbb-section-title">REFLEXÃO</h2>
@@ -138,12 +130,10 @@ export default function Index() {
               </section>
             )}
 
-            {/* Cadastro WhatsApp - Posicionado ao final */}
             <WhatsAppRegistration />
           </motion.div>
         </AnimatePresence>
 
-        {/* Ações Finais */}
         <div className="flex justify-center gap-4 mt-16">
           <Button
             onClick={handleShare}
@@ -156,10 +146,9 @@ export default function Index() {
         </div>
 
         <footer className="text-center mt-20 pb-10 opacity-50">
-          <div className="gold-divider" />
+          <div className="liturgy-divider mb-6" />
           <p className="font-ui text-[10px] tracking-widest uppercase">
-            Conferência Nacional dos Bispos do Brasil<br />
-            Texto Oficial da Liturgia Romana
+            Dados fornecidos por <a href="https://liturgia.up.railway.app/" target="_blank" rel="noopener noreferrer" className="underline hover:text-gold transition-colors">Liturgia API</a>
           </p>
         </footer>
       </div>
