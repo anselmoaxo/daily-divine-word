@@ -13,13 +13,40 @@ export default function WhatsAppRegistration() {
   const [consent, setConsent] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
 
+  const formatPhone = (value: string) => {
+    if (!value) return "";
+    // Remove tudo que não é dígito
+    const digits = value.replace(/\D/g, "");
+    
+    // Limita a 11 dígitos (DDD + 9 dígitos)
+    const limited = digits.substring(0, 11);
+    
+    if (limited.length <= 2) {
+      return limited.length > 0 ? `(${limited}` : "";
+    }
+    if (limited.length <= 6) {
+      return `(${limited.substring(0, 2)}) ${limited.substring(2)}`;
+    }
+    if (limited.length <= 10) {
+      return `(${limited.substring(0, 2)}) ${limited.substring(2, 6)}-${limited.substring(6)}`;
+    }
+    return `(${limited.substring(0, 2)}) ${limited.substring(2, 7)}-${limited.substring(7)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setPhone(formatted);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consent) {
       toast.error("Você precisa aceitar os termos para continuar.");
       return;
     }
-    if (phone.length < 10) {
+    
+    const digitsOnly = phone.replace(/\D/g, "");
+    if (digitsOnly.length < 10) {
       toast.error("Por favor, insira um número de telefone válido.");
       return;
     }
@@ -97,7 +124,7 @@ export default function WhatsAppRegistration() {
                     type="tel"
                     placeholder="(00) 00000-0000" 
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={handlePhoneChange}
                     className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
                     required
                   />
@@ -161,6 +188,8 @@ export default function WhatsAppRegistration() {
                 id="unsub-phone"
                 type="tel"
                 placeholder="(00) 00000-0000" 
+                value={phone}
+                onChange={handlePhoneChange}
                 className="bg-background h-11"
                 required
               />
