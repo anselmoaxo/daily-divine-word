@@ -8,7 +8,7 @@ import AntiphonsSection from "@/components/liturgy/AntiphonsSection";
 import LoadingSkeleton from "@/components/liturgy/LoadingSkeleton";
 import ErrorDisplay from "@/components/liturgy/ErrorDisplay";
 import { motion, AnimatePresence } from "framer-motion";
-import { Share2, BookOpen } from "lucide-react";
+import { Share2 } from "lucide-react";
 
 export default function Index() {
   const [liturgia, setLiturgia] = useState<LiturgiaData | null>(null);
@@ -64,7 +64,6 @@ export default function Index() {
           cor={liturgia.cor}
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
-          onToday={() => setSelectedDate(new Date())}
           darkMode={darkMode}
           onToggleDark={() => setDarkMode(!darkMode)}
         />
