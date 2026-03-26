@@ -7,6 +7,7 @@ import PrayersSection from "@/components/liturgy/PrayersSection";
 import AntiphonsSection from "@/components/liturgy/AntiphonsSection";
 import LoadingSkeleton from "@/components/liturgy/LoadingSkeleton";
 import ErrorDisplay from "@/components/liturgy/ErrorDisplay";
+import WhatsAppRegistration from "@/components/liturgy/WhatsAppRegistration";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2 } from "lucide-react";
 
@@ -123,6 +124,9 @@ export default function Index() {
                 </div>
               </section>
             )}
+
+            {/* 8. Cadastro WhatsApp */}
+            <WhatsAppRegistration />
           </motion.div>
         </AnimatePresence>
 
