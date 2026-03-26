@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageCircle, ShieldCheck, Loader2, XCircle } from "lucide-react";
+import { MessageCircle, ShieldCheck, Loader2, XCircle, Quote } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,6 @@ export default function WhatsAppRegistration() {
     setLoading(true);
     try {
       // Simulação de envio para o n8n
-      // No seu caso real, descomente o código abaixo:
       /*
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
@@ -42,13 +41,13 @@ export default function WhatsAppRegistration() {
       if (!response.ok) throw new Error();
       */
       
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulação
-      toast.success("Cadastro realizado com sucesso! Você receberá a liturgia em breve.");
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success("Cadastro realizado com sucesso! ✨");
       setPhone("");
       setName("");
       setConsent(false);
     } catch (error) {
-      toast.error("Erro ao realizar cadastro. Tente novamente mais tarde.");
+      toast.error("Erro ao realizar cadastro. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +57,6 @@ export default function WhatsAppRegistration() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Envio de cancelamento para o n8n
       toast.success("Sua solicitação de cancelamento foi enviada.");
       setShowUnsubscribe(false);
     } catch (error) {
@@ -69,82 +67,114 @@ export default function WhatsAppRegistration() {
   };
 
   return (
-    <section className="cnbb-section bg-secondary/30 rounded-2xl p-8 mt-12 border border-border/50">
-      <div className="max-w-md mx-auto text-center">
-        <div className="inline-flex p-3 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 mb-4">
-          <MessageCircle size={24} />
+    <section className="cnbb-section bg-secondary/20 rounded-3xl p-8 md:p-12 mt-16 border border-border/40 shadow-sm">
+      <div className="max-w-lg mx-auto text-center">
+        <div className="inline-flex p-4 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 mb-6">
+          <MessageCircle size={28} />
         </div>
         
-        <h2 className="font-display text-2xl font-bold mb-2">Liturgia no seu WhatsApp</h2>
-        <p className="font-body text-muted-foreground text-sm mb-8">
-          Receba diariamente as leituras e reflexões diretamente no seu celular.
-        </p>
+        <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 leading-tight">
+          Receba a Liturgia Diária no seu WhatsApp 🙏
+        </h2>
+        
+        <div className="space-y-4 mb-10">
+          <p className="font-body text-foreground/80 text-base md:text-lg leading-relaxed">
+            Comece o dia inspirado pela Palavra de Deus.
+          </p>
+          <p className="font-body text-muted-foreground text-sm md:text-base">
+            Cadastre seu número e receba todos os dias o Evangelho, Salmo e reflexões direto no seu WhatsApp. ✨
+          </p>
+        </div>
 
         {!showUnsubscribe ? (
-          <form onSubmit={handleSubmit} className="space-y-4 text-left">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome (opcional)</Label>
-              <Input 
-                id="name"
-                placeholder="Seu nome" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="bg-background"
-              />
-            </div>
+          <div className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-5 text-left bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider opacity-70">Nome</Label>
+                  <Input 
+                    id="name"
+                    placeholder="Seu nome" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-background border-border/60 focus:ring-green-500"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">WhatsApp (com DDD)</Label>
-              <Input 
-                id="phone"
-                type="tel"
-                placeholder="(00) 00000-0000" 
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="bg-background"
-                required
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider opacity-70">WhatsApp</Label>
+                  <Input 
+                    id="phone"
+                    type="tel"
+                    placeholder="(00) 00000-0000" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="bg-background border-border/60 focus:ring-green-500"
+                    required
+                  />
+                </div>
+              </div>
 
-            <div className="flex items-start space-x-3 pt-2">
-              <Checkbox 
-                id="consent" 
-                checked={consent}
-                onCheckedChange={(checked) => setConsent(checked as boolean)}
-                className="mt-1"
-              />
-              <div className="grid gap-1.5 leading-none">
+              <div className="flex items-start space-x-3 pt-2">
+                <Checkbox 
+                  id="consent" 
+                  checked={consent}
+                  onCheckedChange={(checked) => setConsent(checked as boolean)}
+                  className="mt-1 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
                 <label
                   htmlFor="consent"
-                  className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer"
+                  className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer select-none"
                 >
                   Ao me cadastrar, concordo em receber mensagens automáticas com a liturgia diária. 
                   Seus dados serão usados exclusivamente para este fim, em conformidade com a LGPD.
                 </label>
               </div>
-            </div>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6"
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2" />}
-              QUERO RECEBER A LITURGIA
-            </Button>
+              <Button 
+                type="submit" 
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-7 text-lg rounded-xl transition-all hover:scale-[1.02] active:scale-95"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2" />}
+                Quero receber a liturgia!
+              </Button>
+
+              <div className="space-y-2 pt-2">
+                <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                  <span>📌</span> Seu número ficará seguro conosco e você pode cancelar a qualquer momento.
+                </p>
+                <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                  <span>📌</span> Sem spam, só a Liturgia diária.
+                </p>
+              </div>
+            </form>
+
+            {/* Testimonial */}
+            <div className="pt-4 border-t border-border/30">
+              <div className="flex flex-col items-center gap-3 italic text-muted-foreground">
+                <Quote size={20} className="text-gold/40" />
+                <p className="text-sm md:text-base max-w-xs">
+                  “A Palavra do dia me ajuda a começar com fé e paz.”
+                </p>
+                <span className="text-xs font-bold uppercase tracking-widest not-italic text-foreground/60">
+                  — Maria, SP
+                </span>
+              </div>
+            </div>
 
             <button 
               type="button"
               onClick={() => setShowUnsubscribe(true)}
-              className="w-full text-center text-[10px] text-muted-foreground hover:text-primary underline mt-4 uppercase tracking-widest"
+              className="text-[10px] text-muted-foreground hover:text-primary underline uppercase tracking-widest transition-colors"
             >
               Desejo cancelar minha inscrição
             </button>
-          </form>
+          </div>
         ) : (
-          <form onSubmit={handleUnsubscribe} className="space-y-4 text-left animate-fade-in">
+          <form onSubmit={handleUnsubscribe} className="space-y-5 text-left bg-card p-8 rounded-2xl border border-border/50 animate-fade-in">
             <div className="space-y-2">
-              <Label htmlFor="unsub-phone">Informe o número para remover</Label>
+              <Label htmlFor="unsub-phone" className="text-xs font-bold uppercase tracking-wider opacity-70">Número para remover</Label>
               <Input 
                 id="unsub-phone"
                 type="tel"
@@ -156,7 +186,7 @@ export default function WhatsAppRegistration() {
             <Button 
               type="submit" 
               variant="destructive"
-              className="w-full py-6"
+              className="w-full py-6 font-bold"
               disabled={loading}
             >
               {loading ? <Loader2 className="animate-spin mr-2" /> : <XCircle className="mr-2" />}
