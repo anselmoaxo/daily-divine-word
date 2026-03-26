@@ -1,4 +1,4 @@
-import { Cross, Calendar, Sun, Moon } from "lucide-react";
+import { Calendar, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 import { getLiturgicalColorClass, formatPortugueseDate, dateToInputValue, inputValueToDate } from "@/lib/liturgy-api";
 import { motion } from "framer-motion";
 
@@ -12,77 +12,106 @@ interface Props {
   onToggleDark: () => void;
 }
 
+const Crucifix = () => (
+  <svg 
+    width="28" 
+    height="28" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className="crucifix-svg mx-auto mb-3"
+  >
+    <path d="M12 2v20M8 7h8" />
+    <path d="M12 7v0" />
+  </svg>
+);
+
 export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDateChange, darkMode, onToggleDark }: Props) {
   const colorClasses = getLiturgicalColorClass(cor);
   const inputDate = dateToInputValue(selectedDate);
   const formattedDate = formatPortugueseDate(data);
 
+  const handleNavigate = (days: number) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + days);
+    onDateChange(newDate);
+  };
+
   return (
-    <header className="text-center mb-12">
-      <div className="flex justify-between items-center mb-8">
-        <div className="w-10" /> {/* Spacer */}
-        <Cross className="text-primary" size={32} strokeWidth={1.5} />
+    <header className="text-center mb-16">
+      <div className="flex justify-between items-center mb-12">
+        <div className="w-10" />
+        <Crucifix />
         <button
           onClick={onToggleDark}
           className="p-2 rounded-full hover:bg-secondary transition-colors"
-          aria-label="Modo escuro"
+          aria-label="Alternar tema"
         >
           {darkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
       </div>
 
-      <div className="space-y-2 mb-8">
-        <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+      <div className="space-y-3 mb-10">
+        <h1 className="text-[42px] font-display font-semibold tracking-tight leading-tight">
           Liturgia Diária
         </h1>
-        <p className="font-ui text-xs tracking-[0.3em] uppercase text-muted-foreground">
+        <p className="text-[12px] font-ui tracking-[0.3em] uppercase opacity-60 font-medium">
           Igreja Católica Apostólica Romana
         </p>
       </div>
 
-      <div className="gold-divider" />
+      <div className="liturgy-divider" />
 
       <motion.div
         key={data}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="my-10"
+        className="mt-10 mb-8"
       >
-        <p className="font-display text-2xl md:text-3xl font-bold mb-2">
+        <p className="text-[22px] font-display font-medium mb-3">
           {formattedDate}
         </p>
-        <p className="font-body text-lg text-primary font-semibold italic max-w-xl mx-auto px-4">
+        <p className="text-lg text-gold font-semibold italic max-w-xl mx-auto px-4 leading-relaxed">
           {liturgia}
         </p>
       </motion.div>
 
       {cor && (
-        <div className="mb-10">
-          <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase border ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}>
+        <div className="mb-12">
+          <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase border bg-[#f5f0e6] dark:bg-white/5 border-[#d6c7a1] text-[#7a5c2e] dark:text-gold`}>
             <span className={`w-2 h-2 rounded-full ${colorClasses.dot}`} />
             Cor: {cor}
           </span>
         </div>
       )}
 
-      {/* Date Selector */}
-      <div className="flex justify-center mt-6">
+      {/* Navigation */}
+      <div className="flex flex-col items-center gap-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => handleNavigate(-1)} className="nav-btn">
+            <ChevronLeft size={16} /> Ontem
+          </button>
+          <button 
+            onClick={() => onDateChange(new Date())} 
+            className="nav-btn bg-gold text-white hover:bg-gold/80"
+          >
+            Hoje
+          </button>
+          <button onClick={() => handleNavigate(1)} className="nav-btn">
+            Amanhã <ChevronRight size={16} />
+          </button>
+        </div>
+
         <div className="relative group">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
-            <Calendar size={16} />
-          </div>
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={14} />
           <input
             type="date"
             value={inputDate}
-            onChange={(e) => {
-              if (e.target.value) {
-                onDateChange(inputValueToDate(e.target.value));
-              }
-            }}
-            className="relative pl-10 pr-4 py-2.5 rounded-xl border border-border bg-card text-sm font-ui 
-                       focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none 
-                       transition-all cursor-pointer hover:bg-secondary/50 min-w-[200px] block"
-            aria-label="Selecionar data da liturgia"
+            onChange={(e) => e.target.value && onDateChange(inputValueToDate(e.target.value))}
+            className="pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:ring-1 focus:ring-gold outline-none transition-all cursor-pointer"
           />
         </div>
       </div>
