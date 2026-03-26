@@ -77,9 +77,6 @@ export default function Index() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Cadastro WhatsApp - Agora no topo para máxima visibilidade */}
-            <WhatsAppRegistration />
-
             {/* 1. Primeira Leitura */}
             <ReadingCard
               label="Primeira Leitura"
@@ -127,6 +124,9 @@ export default function Index() {
                 </div>
               </section>
             )}
+
+            {/* Cadastro WhatsApp - Posicionado ao final para convite após a leitura */}
+            <WhatsAppRegistration />
           </motion.div>
         </AnimatePresence>
 
