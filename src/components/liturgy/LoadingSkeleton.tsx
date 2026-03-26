@@ -1,10 +1,10 @@
-import { Cross } from "lucide-react";
+import { Loader2, Church } from "lucide-react";
 
 export default function LoadingSkeleton() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-8 bg-background">
       <div className="relative">
-        <Cross className="text-gold animate-pulse" size={48} strokeWidth={1.5} />
+        <Church className="text-gold animate-pulse" size={48} strokeWidth={1.5} />
         <div className="absolute inset-0 bg-gold/20 blur-xl rounded-full animate-pulse" />
       </div>
       <div className="text-center space-y-2">
