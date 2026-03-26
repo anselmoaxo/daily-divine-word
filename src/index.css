@@ -24,7 +24,7 @@
     --input: 40 25% 85%;
     --ring: 345 40% 30%;
     --radius: 0.5rem;
-    --gold: 43 70% 55%;
+    --gold: 43 45% 60%;
   }
 
   .dark {
@@ -54,48 +54,44 @@
 }
 
 @layer components {
-  .cnbb-section {
-    @apply py-10 border-b border-border/50 max-w-2xl mx-auto;
-  }
-
-  .cnbb-section-title {
-    @apply text-center font-display text-xs md:text-sm font-bold tracking-[0.2em] mb-8 uppercase;
-    color: hsl(var(--primary));
+  .reading-text {
+    @apply font-body text-base md:text-[17px] leading-[1.8] max-w-[680px] mx-auto text-foreground/90;
   }
 
   .cnbb-verse-num {
-    @apply text-[0.65em] font-bold align-top mr-1 select-none;
-    color: hsl(var(--primary));
+    @apply text-[0.7em] font-bold align-top mr-1 select-none text-gold;
     vertical-align: super;
   }
 
-  .cnbb-text-body {
-    @apply font-body text-lg md:text-xl leading-[1.8] text-foreground/90;
+  .gospel-container {
+    @apply border-l-[3px] border-gold pl-6 py-4 my-10 bg-[#faf7f2] dark:bg-white/5 rounded-r-lg;
   }
 
-  .cnbb-refrain {
-    @apply my-8 p-6 rounded-lg bg-secondary/40 border-l-4 border-primary;
+  .liturgy-divider {
+    @apply w-10 h-[1px] bg-gold/60 mx-auto my-8;
   }
 
-  .cnbb-refrain-label {
-    @apply block text-xs font-bold tracking-widest uppercase mb-2;
-    color: hsl(var(--primary));
+  .cnbb-section {
+    @apply py-12 max-w-2xl mx-auto border-b border-border/30 last:border-0;
   }
 
-  .cnbb-refrain-text {
-    @apply font-display text-xl md:text-2xl font-bold italic;
+  .cnbb-section-title {
+    @apply text-center font-display text-xs font-bold tracking-[0.25em] mb-8 uppercase text-gold;
   }
 
-  .cnbb-gospel-highlight {
-    @apply border-x-0 border-y-2 border-primary/20 py-8 my-8;
+  .psalm-refrain {
+    @apply font-display text-lg md:text-xl font-bold mb-6 text-foreground;
   }
 
-  .cnbb-btn-nav {
-    @apply px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-all;
+  .psalm-verse {
+    @apply pl-4 italic mb-4 text-foreground/80;
   }
 
-  .gold-divider {
-    @apply w-24 h-px mx-auto my-8;
-    background: linear-gradient(90deg, transparent, hsl(var(--gold)), transparent);
+  .nav-btn {
+    @apply px-5 py-2 rounded-full bg-secondary/50 text-secondary-foreground text-sm font-medium hover:bg-gold hover:text-white transition-all duration-300 flex items-center gap-2;
+  }
+
+  .crucifix-svg {
+    @apply transition-transform duration-300 ease-in-out hover:scale-110 cursor-pointer text-gold;
   }
 }
