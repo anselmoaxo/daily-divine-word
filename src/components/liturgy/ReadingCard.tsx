@@ -1,117 +1,93 @@
 import { motion } from "framer-motion";
-import { useState, type ReactNode } from "react";
 import type { LeituraItem } from "@/lib/liturgy-api";
 
 interface Props {
-  icon: ReactNode;
   label: string;
   readings: LeituraItem[];
-  highlight?: boolean;
-  defaultOpen?: boolean;
   index: number;
 }
 
-/** Parse text into verse segments with numbers */
-function parseVerses(raw: string): { num: string; text: string }[] {
-  if (!raw) return [];
-  let processed = raw.replace(/(\d{1,3})([a-záàâãéèêíïóôõúüçA-ZÁÀÂÃÉÈÊÍÏÓÔÕÚÜÇ""])/g, "\n$1 $2");
-  processed = processed.replace(/(\d{1,2},\d{1,2})([a-záàâãéèêíïóôõúüç])/g, "\n$1 $2");
-  const lines = processed.split("\n").filter((l) => l.trim());
-  const verses: { num: string; text: string }[] = [];
-  for (const line of lines) {
-    const match = line.trim().match(/^(\d{1,3}(?:,\d{1,2})?)\s+(.*)$/);
-    if (match) {
-      verses.push({ num: match[1], text: match[2].trim() });
-    } else if (verses.length > 0) {
-      verses[verses.length - 1].text += " " + line.trim();
-    } else {
-      verses.push({ num: "", text: line.trim() });
+/** Parses text into segments with superscript verse numbers */
+function renderVerses(raw: string) {
+  if (!raw) return null;
+  
+  // Regex to find verse numbers (e.g., "1", "26", "8,10")
+  const parts = raw.split(/(\d{1,3}(?:,\d{1,2})?)/g);
+  
+  return parts.map((part, i) => {
+    if (/^\d{1,3}(?:,\d{1,2})?$/.test(part)) {
+      return <span key={i} className="cnbb-verse-num">{part}</span>;
     }
-  }
-  return verses;
-}
-
-function splitIntoLines(text: string): string[] {
-  const parts = text.split(/(?<=[.;!?])\s+|(?<=[""])\s+/);
-  return parts.filter(Boolean).map((p) => p.trim());
+    return <span key={i}>{part}</span>;
+  });
 }
 
 export default function ReadingCard({ label, readings, index }: Props) {
-  const [open, setOpen] = useState(true);
-
   if (!readings || readings.length === 0) return null;
 
-  // Map label to CNBB-style title
+  const isPsalm = label.toLowerCase().includes("salmo");
   const sectionTitle = (() => {
     const l = label.toLowerCase();
     if (l.includes("primeira")) return "PRIMEIRA LEITURA";
     if (l.includes("segunda")) return "SEGUNDA LEITURA";
     if (l.includes("salmo")) return "SALMO RESPONSORIAL";
-    if (l.includes("extra")) return "LEITURAS EXTRAS";
     return label.toUpperCase();
   })();
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.08 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
       className="cnbb-section"
     >
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full text-left"
-        aria-expanded={open}
-      >
-        <h2 className="cnbb-section-title">{sectionTitle}</h2>
-      </button>
+      <h2 className="cnbb-section-title">{sectionTitle}</h2>
 
-      {open && readings.map((reading, i) => (
-        <div key={i} className={i > 0 ? "mt-8 pt-6 border-t border-border" : ""}>
-          {/* Antiphon / theme */}
+      {readings.map((reading, i) => (
+        <div key={i} className={i > 0 ? "mt-10 pt-10 border-t border-border/30" : ""}>
+          {/* Reference */}
+          <p className="text-center font-ui text-sm font-bold text-primary mb-6 tracking-widest">
+            {reading.referencia}
+          </p>
+
+          {/* Title/Theme */}
           {reading.titulo && (
-            <p className="cnbb-antiphon">
-              <em>{reading.titulo}</em>
+            <p className="text-center font-display text-lg md:text-xl italic text-foreground/70 mb-8 px-4">
+              {reading.titulo}
             </p>
           )}
 
-          {/* Reference */}
-          <p className="font-body text-foreground text-base mb-4">
-            {reading.titulo ? "" : "Leitura "}{" "}
-            <span className="cnbb-ref-inline">{reading.referencia}</span>
-          </p>
-
-          {/* Refrain for psalms */}
-          {reading.refrao && (
+          {/* Psalm Refrain */}
+          {isPsalm && reading.refrao && (
             <div className="cnbb-refrain">
-              <p className="font-body font-semibold">
-                — {reading.refrao}
-              </p>
-              <p className="font-body font-bold mt-2">
-                — {reading.refrao}
-              </p>
+              <span className="cnbb-refrain-label">R. (Resposta):</span>
+              <p className="cnbb-refrain-text">{reading.refrao}</p>
             </div>
           )}
 
-          {/* Verses in CNBB style */}
-          <div className="cnbb-text-body">
-            {parseVerses(reading.texto).map((verse, vi) => (
-              <div key={vi} className="cnbb-verse-block">
-                {verse.num && <span className="cnbb-verse-num">{verse.num}</span>}
-                <div className={verse.num ? "cnbb-verse-text" : "cnbb-verse-text cnbb-verse-no-num"}>
-                  {splitIntoLines(verse.text).map((line, j) => (
-                    <span key={j} className="block">{line}</span>
-                  ))}
-                </div>
+          {/* Body Text */}
+          <div className="cnbb-text-body px-4 md:px-0">
+            {isPsalm ? (
+              <div className="space-y-6 italic">
+                {reading.texto.split('\n').map((line, j) => (
+                  <p key={j} className={line.startsWith('—') ? "pl-4" : ""}>
+                    {line}
+                  </p>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="whitespace-pre-wrap">
+                {renderVerses(reading.texto)}
+              </div>
+            )}
           </div>
 
-          {/* Closing for readings */}
-          {!label.toLowerCase().includes("salmo") && (
-            <div className="mt-6">
-              <p className="font-body text-foreground text-base">— Palavra do Senhor.</p>
-              <p className="font-body text-foreground text-base font-semibold mt-1">— Graças a Deus.</p>
+          {/* Closing */}
+          {!isPsalm && (
+            <div className="mt-8 text-center border-t border-border/20 pt-6">
+              <p className="font-body text-base">— Palavra do Senhor.</p>
+              <p className="font-body text-base font-bold mt-1">— Graças a Deus.</p>
             </div>
           )}
         </div>

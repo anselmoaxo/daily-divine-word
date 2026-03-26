@@ -8,220 +8,94 @@
   :root {
     --background: 40 33% 96%;
     --foreground: 20 15% 15%;
-
     --card: 40 40% 98%;
     --card-foreground: 20 15% 15%;
-
     --popover: 40 40% 98%;
     --popover-foreground: 20 15% 15%;
-
     --primary: 345 40% 30%;
     --primary-foreground: 40 33% 96%;
-
     --secondary: 40 40% 90%;
     --secondary-foreground: 20 15% 25%;
-
     --muted: 40 20% 92%;
     --muted-foreground: 20 10% 45%;
-
     --accent: 43 60% 50%;
     --accent-foreground: 20 15% 10%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
     --border: 40 25% 85%;
     --input: 40 25% 85%;
     --ring: 345 40% 30%;
-
     --radius: 0.5rem;
-
     --gold: 43 70% 55%;
-    --gold-light: 43 60% 85%;
-    --wine: 345 40% 30%;
-    --wine-light: 345 30% 90%;
-    --parchment: 40 33% 96%;
-    --parchment-dark: 40 25% 88%;
-
-    --liturgical-roxo: 270 50% 40%;
-    --liturgical-branco: 0 0% 95%;
-    --liturgical-verde: 140 40% 35%;
-    --liturgical-vermelho: 0 65% 45%;
-    --liturgical-rosa: 330 50% 65%;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
     --background: 20 15% 10%;
     --foreground: 40 20% 90%;
-
     --card: 20 15% 14%;
     --card-foreground: 40 20% 90%;
-
-    --popover: 20 15% 14%;
-    --popover-foreground: 40 20% 90%;
-
     --primary: 43 60% 55%;
     --primary-foreground: 20 15% 10%;
-
     --secondary: 20 12% 20%;
     --secondary-foreground: 40 20% 85%;
-
     --muted: 20 10% 18%;
     --muted-foreground: 40 15% 60%;
-
     --accent: 43 50% 45%;
-    --accent-foreground: 40 20% 95%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
     --border: 20 12% 22%;
-    --input: 20 12% 22%;
-    --ring: 43 60% 55%;
-
-    --gold: 43 60% 55%;
-    --gold-light: 43 30% 20%;
-    --wine: 345 35% 55%;
-    --wine-light: 345 20% 18%;
-    --parchment: 20 15% 10%;
-    --parchment-dark: 20 12% 15%;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Lora', serif;
   }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Crimson Text', serif;
+  h1, h2, h3, h4 {
+    @apply font-display;
   }
 }
 
 @layer components {
-  /* CNBB-style clean layout */
   .cnbb-section {
-    @apply py-8 border-b border-border;
-  }
-
-  .cnbb-section:last-of-type {
-    @apply border-b-0;
+    @apply py-10 border-b border-border/50 max-w-2xl mx-auto;
   }
 
   .cnbb-section-title {
-    @apply text-center font-display text-xl md:text-2xl font-bold tracking-wide mb-4;
+    @apply text-center font-display text-xs md:text-sm font-bold tracking-[0.2em] mb-8 uppercase;
     color: hsl(var(--primary));
-    letter-spacing: 0.08em;
-  }
-
-  .cnbb-antiphon {
-    @apply text-right font-body text-base md:text-lg text-foreground/80 mb-4 italic;
-  }
-
-  .cnbb-ref-inline {
-    color: hsl(var(--primary));
-    font-weight: 400;
-  }
-
-  .cnbb-verse-block {
-    @apply flex gap-0 mb-1;
-    padding-left: 2.5rem;
-    position: relative;
   }
 
   .cnbb-verse-num {
-    @apply absolute left-0 font-ui text-sm font-medium select-none;
+    @apply text-[0.65em] font-bold align-top mr-1 select-none;
     color: hsl(var(--primary));
-    width: 2rem;
-    text-align: right;
-    padding-top: 0.15rem;
-  }
-
-  .cnbb-verse-text {
-    @apply font-body text-foreground/90 leading-[1.75] text-base md:text-lg;
-  }
-
-  .cnbb-verse-no-num {
-    @apply ml-0;
-    padding-left: 0;
+    vertical-align: super;
   }
 
   .cnbb-text-body {
-    @apply max-w-[700px];
+    @apply font-body text-lg md:text-xl leading-[1.8] text-foreground/90;
   }
 
   .cnbb-refrain {
-    @apply my-6 pl-0;
+    @apply my-8 p-6 rounded-lg bg-secondary/40 border-l-4 border-primary;
+  }
+
+  .cnbb-refrain-label {
+    @apply block text-xs font-bold tracking-widest uppercase mb-2;
     color: hsl(var(--primary));
   }
 
-  .cnbb-refrain p {
-    @apply font-body text-base md:text-lg italic;
+  .cnbb-refrain-text {
+    @apply font-display text-xl md:text-2xl font-bold italic;
   }
 
-  .cnbb-btn {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded border border-border
-           text-muted-foreground bg-card hover:bg-secondary text-xs font-ui transition-colors;
+  .cnbb-gospel-highlight {
+    @apply border-x-0 border-y-2 border-primary/20 py-8 my-8;
   }
 
-  .cnbb-prayer-label {
-    @apply font-ui text-sm font-semibold mb-2 uppercase tracking-wide;
-    color: hsl(var(--primary));
-  }
-
-  /* Legacy classes kept for header */
-  .liturgy-reference {
-    @apply text-sm font-medium tracking-wide uppercase;
-    color: hsl(var(--accent));
-    font-family: 'Inter', sans-serif;
-  }
-
-  .liturgy-title {
-    @apply text-xs tracking-widest uppercase mb-1;
-    color: hsl(var(--muted-foreground));
-    font-family: 'Inter', sans-serif;
+  .cnbb-btn-nav {
+    @apply px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-all;
   }
 
   .gold-divider {
-    @apply w-16 h-0.5 mx-auto my-6;
+    @apply w-24 h-px mx-auto my-8;
     background: linear-gradient(90deg, transparent, hsl(var(--gold)), transparent);
-  }
-
-  .liturgical-color-badge {
-    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase;
-    font-family: 'Inter', sans-serif;
-  }
-}
-
-@layer utilities {
-  .font-body {
-    font-family: 'Lora', serif;
-  }
-
-  .font-ui {
-    font-family: 'Inter', sans-serif;
   }
 }

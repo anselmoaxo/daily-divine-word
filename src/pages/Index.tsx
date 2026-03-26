@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { BookOpen, Music, ScrollText, Share2 } from "lucide-react";
 import { fetchLiturgia, type LiturgiaData } from "@/lib/liturgy-api";
 import LiturgyHeader from "@/components/liturgy/LiturgyHeader";
 import ReadingCard from "@/components/liturgy/ReadingCard";
@@ -9,6 +8,7 @@ import AntiphonsSection from "@/components/liturgy/AntiphonsSection";
 import LoadingSkeleton from "@/components/liturgy/LoadingSkeleton";
 import ErrorDisplay from "@/components/liturgy/ErrorDisplay";
 import { motion, AnimatePresence } from "framer-motion";
+import { Share2, BookOpen } from "lucide-react";
 
 export default function Index() {
   const [liturgia, setLiturgia] = useState<LiturgiaData | null>(null);
@@ -27,7 +27,7 @@ export default function Index() {
       const data = await fetchLiturgia(date);
       setLiturgia(data);
     } catch (e: any) {
-      setError(e.message || "Erro ao buscar a liturgia. Tente novamente.");
+      setError(e.message || "Erro ao buscar a liturgia.");
     } finally {
       setLoading(false);
     }
@@ -41,16 +41,9 @@ export default function Index() {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  const handleDateChange = (date: Date) => setSelectedDate(date);
-  const handleToday = () => {
-    const now = new Date();
-    setSelectedDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
-  };
-
   const handleShare = async () => {
-    const text = liturgia
-      ? `Liturgia Diária - ${liturgia.data}\n${liturgia.liturgia}\nCor: ${liturgia.cor}`
-      : "Liturgia Diária";
+    if (!liturgia) return;
+    const text = `Liturgia Diária - ${liturgia.data}\n${liturgia.liturgia}\n\nLeia em: ${window.location.href}`;
     if (navigator.share) {
       await navigator.share({ title: "Liturgia Diária", text });
     } else {
@@ -62,30 +55,19 @@ export default function Index() {
   if (error) return <ErrorDisplay message={error} onRetry={() => load(selectedDate)} />;
   if (!liturgia) return null;
 
-  const { leituras } = liturgia;
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen bg-background selection:bg-primary/20">
+      <div className="max-w-4xl mx-auto px-6 py-12">
         <LiturgyHeader
           data={liturgia.data}
           liturgia={liturgia.liturgia}
           cor={liturgia.cor}
           selectedDate={selectedDate}
-          onDateChange={handleDateChange}
-          onToday={handleToday}
+          onDateChange={setSelectedDate}
+          onToday={() => setSelectedDate(new Date())}
           darkMode={darkMode}
           onToggleDark={() => setDarkMode(!darkMode)}
         />
-
-        {/* Leituras index - CNBB style */}
-        <div className="mb-8 text-sm font-ui text-muted-foreground">
-          <p className="font-semibold mb-1">Leituras:</p>
-          {leituras.primeiraLeitura.length > 0 && <p>{leituras.primeiraLeitura[0].referencia}</p>}
-          {leituras.salmo.length > 0 && <p>{leituras.salmo[0].referencia}</p>}
-          {leituras.segundaLeitura.length > 0 && <p>{leituras.segundaLeitura[0].referencia}</p>}
-          {leituras.evangelho.length > 0 && <p>{leituras.evangelho[0].referencia}</p>}
-        </div>
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -93,73 +75,74 @@ export default function Index() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4 }}
           >
-            {/* Primeira Leitura */}
+            {/* 1. Primeira Leitura */}
             <ReadingCard
-              icon={<BookOpen size={20} />}
               label="Primeira Leitura"
-              readings={leituras.primeiraLeitura}
+              readings={liturgia.leituras.primeiraLeitura}
               index={1}
             />
 
-            {/* Salmo */}
+            {/* 2. Salmo */}
             <ReadingCard
-              icon={<Music size={20} />}
               label="Salmo Responsorial"
-              readings={leituras.salmo}
+              readings={liturgia.leituras.salmo}
               index={2}
             />
 
-            {/* Segunda Leitura */}
+            {/* 3. Segunda Leitura (se houver) */}
             <ReadingCard
-              icon={<ScrollText size={20} />}
               label="Segunda Leitura"
-              readings={leituras.segundaLeitura}
+              readings={liturgia.leituras.segundaLeitura}
               index={3}
             />
 
-            {/* Extras */}
-            {leituras.extras && leituras.extras.length > 0 && (
-              <ReadingCard
-                icon={<BookOpen size={20} />}
-                label="Leituras Extras"
-                readings={leituras.extras}
-                index={4}
-              />
+            {/* 4. Evangelho (Destaque) */}
+            <GospelSection readings={liturgia.leituras.evangelho} index={4} />
+
+            {/* 5. Orações e Antífonas */}
+            <PrayersSection oracoes={liturgia.oracoes} index={5} />
+            <AntiphonsSection antifonas={liturgia.antifonas || {}} index={6} />
+
+            {/* 6. Santo do Dia */}
+            {liturgia.santo && (
+              <section className="cnbb-section">
+                <h2 className="cnbb-section-title">SANTO DO DIA</h2>
+                <div className="cnbb-text-body px-4 italic text-center">
+                  {liturgia.santo}
+                </div>
+              </section>
             )}
 
-            {/* Evangelho */}
-            <GospelSection readings={leituras.evangelho} index={5} />
-
-            {/* Orações e Antífonas */}
-            <PrayersSection oracoes={liturgia.oracoes} index={6} />
-            <AntiphonsSection antifonas={liturgia.antifonas || {}} index={7} />
+            {/* 7. Reflexão */}
+            {liturgia.reflexao && (
+              <section className="cnbb-section">
+                <h2 className="cnbb-section-title">REFLEXÃO</h2>
+                <div className="cnbb-text-body px-4 whitespace-pre-wrap text-base md:text-lg">
+                  {liturgia.reflexao}
+                </div>
+              </section>
+            )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Share */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-10"
-        >
+        {/* Ações Finais */}
+        <div className="flex justify-center gap-4 mt-16">
           <button
             onClick={handleShare}
-            className="cnbb-btn gap-2 px-5 py-2.5"
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity"
           >
-            <Share2 size={16} />
+            <Share2 size={18} />
             Compartilhar
           </button>
-        </motion.div>
+        </div>
 
-        {/* Footer */}
-        <footer className="text-center mt-12 pb-8">
+        <footer className="text-center mt-20 pb-10 opacity-50">
           <div className="gold-divider" />
-          <p className="font-ui text-xs text-muted-foreground mt-4 italic">
+          <p className="font-ui text-[10px] tracking-widest uppercase">
             Conferência Nacional dos Bispos do Brasil<br />
-            © Todos os direitos reservados.
+            Texto Oficial da Liturgia Romana
           </p>
         </footer>
       </div>
