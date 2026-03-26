@@ -16,6 +16,8 @@ export interface LiturgiaData {
   data: string;
   liturgia: string;
   cor: string;
+  santo?: string;
+  reflexao?: string;
   oracoes: {
     coleta: string;
     oferendas: string;
@@ -58,16 +60,10 @@ export async function fetchLiturgia(date?: Date): Promise<LiturgiaData> {
 
   try {
     const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Erro ao buscar liturgia: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`Erro ao buscar liturgia: ${res.status}`);
     const data = await res.json();
+    if (!data) throw new Error("A API retornou dados vazios.");
 
-    if (!data) {
-      throw new Error("A API retornou dados vazios.");
-    }
-
-    // Normalize arrays
     const leituras = data.leituras || {};
     return {
       ...data,
@@ -91,27 +87,25 @@ export async function fetchLiturgia(date?: Date): Promise<LiturgiaData> {
   }
 }
 
-export function getLiturgicalColorClass(cor: string): { bg: string; text: string; dot: string } {
+export function getLiturgicalColorClass(cor: string): { bg: string; text: string; dot: string; border: string } {
   const c = cor?.toLowerCase() || "";
-  if (c.includes("roxo") || c.includes("violeta")) return { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-800 dark:text-purple-300", dot: "bg-purple-600" };
-  if (c.includes("branco")) return { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-800 dark:text-amber-300", dot: "bg-amber-100 border border-amber-300" };
-  if (c.includes("verde")) return { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-800 dark:text-green-300", dot: "bg-green-600" };
-  if (c.includes("vermelho")) return { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-800 dark:text-red-300", dot: "bg-red-600" };
-  if (c.includes("rosa")) return { bg: "bg-pink-100 dark:bg-pink-900/30", text: "text-pink-800 dark:text-pink-300", dot: "bg-pink-500" };
-  return { bg: "bg-secondary", text: "text-secondary-foreground", dot: "bg-muted-foreground" };
+  if (c.includes("roxo") || c.includes("violeta")) 
+    return { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-800 dark:text-purple-300", dot: "bg-purple-600", border: "border-purple-300" };
+  if (c.includes("branco")) 
+    return { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-800 dark:text-amber-300", dot: "bg-amber-100 border border-amber-300", border: "border-amber-200" };
+  if (c.includes("verde")) 
+    return { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-800 dark:text-green-300", dot: "bg-green-600", border: "border-green-300" };
+  if (c.includes("vermelho")) 
+    return { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-800 dark:text-red-300", dot: "bg-red-600", border: "border-red-300" };
+  if (c.includes("rosa")) 
+    return { bg: "bg-pink-100 dark:bg-pink-900/30", text: "text-pink-800 dark:text-pink-300", dot: "bg-pink-500", border: "border-pink-300" };
+  return { bg: "bg-secondary", text: "text-secondary-foreground", dot: "bg-muted-foreground", border: "border-border" };
 }
 
 export function formatPortugueseDate(dateStr: string): string {
   if (!dateStr) return "";
-  const months = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
-  const weekdays = [
-    "Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira",
-    "Quinta-feira", "Sexta-feira", "Sábado"
-  ];
-
+  const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
   const parts = dateStr.split("/");
   if (parts.length !== 3) return dateStr;
   const [day, month, year] = parts;
