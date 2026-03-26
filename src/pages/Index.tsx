@@ -125,7 +125,7 @@ export default function Index() {
               </section>
             )}
 
-            {/* Cadastro WhatsApp - Posicionado ao final para convite após a leitura */}
+            {/* Cadastro WhatsApp - Posicionado ao final */}
             <WhatsAppRegistration />
           </motion.div>
         </AnimatePresence>
