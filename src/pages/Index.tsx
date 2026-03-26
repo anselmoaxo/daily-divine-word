@@ -10,6 +10,8 @@ import ErrorDisplay from "@/components/liturgy/ErrorDisplay";
 import WhatsAppRegistration from "@/components/liturgy/WhatsAppRegistration";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function Index() {
   const [liturgia, setLiturgia] = useState<LiturgiaData | null>(null);
@@ -45,10 +47,21 @@ export default function Index() {
   const handleShare = async () => {
     if (!liturgia) return;
     const text = `Liturgia Diária - ${liturgia.data}\n${liturgia.liturgia}\n\nLeia em: ${window.location.href}`;
-    if (navigator.share) {
-      await navigator.share({ title: "Liturgia Diária", text });
-    } else {
-      await navigator.clipboard.writeText(text);
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({ 
+          title: "Liturgia Diária", 
+          text: text,
+          url: window.location.href 
+        });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Link copiado para a área de transferência! ✨");
+      }
+    } catch (err) {
+      // Usuário cancelou o compartilhamento ou erro silencioso
+      console.log("Erro ao compartilhar:", err);
     }
   };
 
@@ -132,13 +145,14 @@ export default function Index() {
 
         {/* Ações Finais */}
         <div className="flex justify-center gap-4 mt-16">
-          <button
+          <Button
             onClick={handleShare}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity"
+            size="lg"
+            className="rounded-full px-8 py-6 font-bold shadow-lg hover:scale-105 transition-all"
           >
-            <Share2 size={18} />
-            Compartilhar
-          </button>
+            <Share2 className="mr-2 h-5 w-5" />
+            Compartilhar Liturgia
+          </Button>
         </div>
 
         <footer className="text-center mt-20 pb-10 opacity-50">
