@@ -35,27 +35,11 @@ export interface LiturgiaData {
   };
 }
 
-/**
- * Converts a Date to dd/mm/yyyy string for the API
- */
-function formatDateForApi(date: Date): string {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-/**
- * Converts a yyyy-mm-dd string (from input[type=date]) to a local Date
- */
 export function inputValueToDate(value: string): Date {
   const [y, m, d] = value.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
-/**
- * Converts a Date to yyyy-mm-dd for input[type=date]
- */
 export function dateToInputValue(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -72,30 +56,39 @@ export async function fetchLiturgia(date?: Date): Promise<LiturgiaData> {
     url = `${BASE_URL}/?dia=${dia}&mes=${mes}&ano=${ano}`;
   }
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Erro ao buscar liturgia: ${res.status}`);
-  }
-  const data = await res.json();
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Erro ao buscar liturgia: ${res.status}`);
+    }
+    const data = await res.json();
 
-  // Normalize arrays
-  const leituras = data.leituras || {};
-  return {
-    ...data,
-    leituras: {
-      primeiraLeitura: Array.isArray(leituras.primeiraLeitura) ? leituras.primeiraLeitura : leituras.primeiraLeitura ? [leituras.primeiraLeitura] : [],
-      segundaLeitura: Array.isArray(leituras.segundaLeitura) ? leituras.segundaLeitura : leituras.segundaLeitura ? [leituras.segundaLeitura] : [],
-      salmo: Array.isArray(leituras.salmo) ? leituras.salmo : leituras.salmo ? [leituras.salmo] : [],
-      evangelho: Array.isArray(leituras.evangelho) ? leituras.evangelho : leituras.evangelho ? [leituras.evangelho] : [],
-      extras: Array.isArray(leituras.extras) ? leituras.extras : [],
-    },
-    oracoes: {
-      coleta: data.oracoes?.coleta || "",
-      oferendas: data.oracoes?.oferendas || "",
-      comunhao: data.oracoes?.comunhao || "",
-      extras: Array.isArray(data.oracoes?.extras) ? data.oracoes.extras : [],
-    },
-  };
+    if (!data) {
+      throw new Error("A API retornou dados vazios.");
+    }
+
+    // Normalize arrays
+    const leituras = data.leituras || {};
+    return {
+      ...data,
+      leituras: {
+        primeiraLeitura: Array.isArray(leituras.primeiraLeitura) ? leituras.primeiraLeitura : leituras.primeiraLeitura ? [leituras.primeiraLeitura] : [],
+        segundaLeitura: Array.isArray(leituras.segundaLeitura) ? leituras.segundaLeitura : leituras.segundaLeitura ? [leituras.segundaLeitura] : [],
+        salmo: Array.isArray(leituras.salmo) ? leituras.salmo : leituras.salmo ? [leituras.salmo] : [],
+        evangelho: Array.isArray(leituras.evangelho) ? leituras.evangelho : leituras.evangelho ? [leituras.evangelho] : [],
+        extras: Array.isArray(leituras.extras) ? leituras.extras : [],
+      },
+      oracoes: {
+        coleta: data.oracoes?.coleta || "",
+        oferendas: data.oracoes?.oferendas || "",
+        comunhao: data.oracoes?.comunhao || "",
+        extras: Array.isArray(data.oracoes?.extras) ? data.oracoes.extras : [],
+      },
+    };
+  } catch (error: any) {
+    console.error("Fetch error:", error);
+    throw error;
+  }
 }
 
 export function getLiturgicalColorClass(cor: string): { bg: string; text: string; dot: string } {
@@ -109,6 +102,7 @@ export function getLiturgicalColorClass(cor: string): { bg: string; text: string
 }
 
 export function formatPortugueseDate(dateStr: string): string {
+  if (!dateStr) return "";
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
