@@ -65,15 +65,24 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
         </div>
       )}
 
-      {/* Date Selector Only */}
-      <div className="flex justify-center">
-        <div className="relative inline-block">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={14} />
+      {/* Date Selector */}
+      <div className="flex justify-center mt-6">
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
+            <Calendar size={16} />
+          </div>
           <input
             type="date"
             value={inputDate}
-            onChange={(e) => e.target.value && onDateChange(inputValueToDate(e.target.value))}
-            className="pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer"
+            onChange={(e) => {
+              if (e.target.value) {
+                onDateChange(inputValueToDate(e.target.value));
+              }
+            }}
+            className="relative pl-10 pr-4 py-2.5 rounded-xl border border-border bg-card text-sm font-ui 
+                       focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none 
+                       transition-all cursor-pointer hover:bg-secondary/50 min-w-[200px] block"
+            aria-label="Selecionar data da liturgia"
           />
         </div>
       </div>
