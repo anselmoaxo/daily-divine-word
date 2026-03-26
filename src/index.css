@@ -216,6 +216,7 @@
   }
 }
 
+@layer utilities {
   .font-body {
     font-family: 'Lora', serif;
   }
