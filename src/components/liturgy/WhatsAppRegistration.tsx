@@ -1,23 +1,29 @@
 import { useState } from "react";
-import { MessageCircle, ShieldCheck, Loader2, XCircle, Quote, UserMinus } from "lucide-react";
+import { MessageCircle, ShieldCheck, Loader2, XCircle, Quote, UserMinus, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
+import { getLiturgicalColorClass } from "@/lib/liturgy-api";
+import { supabase } from "@/integrations/supabase/client";
 
-export default function WhatsAppRegistration() {
+interface Props {
+  liturgicalColor: string;
+}
+
+export default function WhatsAppRegistration({ liturgicalColor }: Props) {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [city, setCity] = useState("");
-  const [birthdate, setBirthdate] = useState("");
   const [consent, setConsent] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
+  
+  // Campo Honeypot para proteção anti-bot (invisível para humanos)
+  const [honeypot, setHoneypot] = useState("");
 
-  // URL do Webhook do n8n
-  const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://n8n.anselmotech.online/webhook-test/45c81e36-9481-4ac3-a209-fdf4dcc74e1d";
+  const colorTheme = getLiturgicalColorClass(liturgicalColor);
 
   const formatPhone = (value: string) => {
     if (!value) return "";
@@ -56,37 +62,28 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      // Construindo os parâmetros da URL para a requisição GET com os novos campos
-      const params = new URLSearchParams({
-        action: "subscribe",
-        name: name.trim(),
-        phone: digitsOnly,
-        email: email.trim(),
-        city: city.trim(),
-        birthdate: birthdate,
-        consent: "true",
-        timestamp: new Date().toISOString(),
-        source: "liturgia.anselmotech.online"
+      // Chamada segura para a Supabase Edge Function (oculta a URL do n8n)
+      const { data, error } = await supabase.functions.invoke("subscribe", {
+        body: {
+          action: "subscribe",
+          name: name.trim(),
+          phone: digitsOnly,
+          honeypot: honeypot, // Envia o honeypot para validação anti-bot
+        },
+        headers: {
+          "x-api-key": "liturgia-diaria-secret-key-2026" // Chave de autenticação entre frontend e Edge Function
+        }
       });
 
-      const response = await fetch(`${WEBHOOK_URL}?${params.toString()}`, {
-        method: "GET",
-      });
+      if (error) throw error;
 
-      if (!response.ok) {
-        throw new Error("Falha ao enviar dados para o n8n.");
-      }
-
-      toast.success("Cadastro enviado com sucesso! Verifique seu n8n. ✨");
+      toast.success("Cadastro enviado com sucesso! ✨");
       setPhone("");
       setName("");
-      setEmail("");
-      setCity("");
-      setBirthdate("");
       setConsent(false);
-    } catch (error) {
-      console.error("Erro ao enviar para o n8n:", error);
-      toast.error("Erro ao enviar dados. Verifique a conexão.");
+    } catch (error: any) {
+      console.error("Erro ao enviar cadastro:", error);
+      toast.error(error.message || "Erro ao enviar dados. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -102,27 +99,25 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        action: "unsubscribe",
-        phone: digitsOnly,
-        timestamp: new Date().toISOString(),
-        source: "liturgia.anselmotech.online"
+      const { data, error } = await supabase.functions.invoke("subscribe", {
+        body: {
+          action: "unsubscribe",
+          phone: digitsOnly,
+          honeypot: honeypot,
+        },
+        headers: {
+          "x-api-key": "liturgia-diaria-secret-key-2026"
+        }
       });
 
-      const response = await fetch(`${WEBHOOK_URL}?${params.toString()}`, {
-        method: "GET",
-      });
-
-      if (!response.ok) {
-        throw new Error("Falha ao processar cancelamento.");
-      }
+      if (error) throw error;
 
       toast.success("Solicitação de cancelamento enviada com sucesso!");
       setPhone("");
       setShowUnsubscribe(false);
-    } catch (error) {
-      console.error("Erro ao enviar cancelamento para o n8n:", error);
-      toast.error("Erro ao processar cancelamento.");
+    } catch (error: any) {
+      console.error("Erro ao enviar cancelamento:", error);
+      toast.error("Erro ao processar cancelamento. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -153,70 +148,42 @@ export default function WhatsAppRegistration() {
         {!showUnsubscribe ? (
           <div className="space-y-8">
             <form onSubmit={handleSubmit} className="space-y-5 text-left bg-card/50 backdrop-blur-sm p-6 rounded-2xl border border-border/40 shadow-xl">
-              <div className="space-y-4">
-                {/* Nome e WhatsApp */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Nome (obrigatório)</Label>
-                    <Input 
-                      id="name"
-                      placeholder="Seu nome" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
-                      required
-                    />
-                  </div>
+              
+              {/* Campo Honeypot Invisível para Proteção Anti-Bot */}
+              <div className="hidden" aria-hidden="true">
+                <input
+                  type="text"
+                  name="website_honeypot"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">WhatsApp (obrigatório)</Label>
-                    <Input 
-                      id="phone"
-                      type="tel"
-                      placeholder="(00) 00000-0000" 
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* E-mail e Cidade */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">E-mail (opcional)</Label>
-                    <Input 
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com" 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Cidade (opcional)</Label>
-                    <Input 
-                      id="city"
-                      placeholder="Sua cidade" 
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
-                    />
-                  </div>
-                </div>
-
-                {/* Data de Nascimento */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="birthdate" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Data de nascimento (opcional)</Label>
+                  <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Nome (obrigatório)</Label>
                   <Input 
-                    id="birthdate"
-                    type="date"
-                    value={birthdate}
-                    onChange={(e) => setBirthdate(e.target.value)}
+                    id="name"
+                    placeholder="Seu nome" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">WhatsApp (obrigatório)</Label>
+                  <Input 
+                    id="phone"
+                    type="tel"
+                    placeholder="(00) 00000-0000" 
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                    required
                   />
                 </div>
               </div>
@@ -230,13 +197,16 @@ export default function WhatsAppRegistration() {
                   required
                 />
                 <label htmlFor="consent" className="text-[10px] text-muted-foreground leading-relaxed cursor-pointer select-none">
-                  Consentimento para receber mensagens (obrigatório). Seus dados estão protegidos pela LGPD.
+                  Concordo em receber a liturgia diária. Seus dados estão protegidos pela LGPD. Leia nossa{" "}
+                  <Link to="/politica-de-privacidade" className="underline text-gold hover:text-gold/80 font-semibold">
+                    Política de Privacidade
+                  </Link>.
                 </label>
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-7 text-lg rounded-xl transition-all shadow-lg shadow-green-600/20 hover:scale-[1.01]"
+                className={`w-full font-bold py-7 text-lg rounded-xl transition-all shadow-lg hover:scale-[1.01] ${colorTheme.buttonBg}`}
                 disabled={loading}
               >
                 {loading ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2" />}
@@ -245,7 +215,7 @@ export default function WhatsAppRegistration() {
 
               <div className="space-y-1.5 pt-2">
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
-                  <span className="text-gold">📌</span> Número seguro e sem spam.
+                  <Lock size={10} className="text-gold" /> Seus dados estão seguros e protegidos.
                 </p>
               </div>
             </form>
