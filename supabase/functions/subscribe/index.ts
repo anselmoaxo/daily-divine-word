@@ -52,10 +52,10 @@ serve(async (req) => {
       );
     }
 
-    // 5. Encaminhar para o n8n de forma segura
-    const N8N_WEBHOOK_URL = Deno.env.get("N8N_WEBHOOK_URL") || "https://n8n.anselmotech.online/webhook-test/45c81e36-9481-4ac3-a209-fdf4dcc74e1d";
+    // 5. Encaminhar para o n8n de forma segura (URL de Produção atualizada)
+    const N8N_WEBHOOK_URL = Deno.env.get("N8N_WEBHOOK_URL") || "https://n8n.anselmotech.online/webhook/cadastro";
     
-    // Construindo os parâmetros para o GET do n8n (conforme configurado anteriormente)
+    // Construindo os parâmetros para o GET do n8n
     const params = new URLSearchParams({
       action,
       name: name || "",
