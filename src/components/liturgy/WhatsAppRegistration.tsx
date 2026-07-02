@@ -7,7 +7,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { getLiturgicalColorClass } from "@/lib/liturgy-api";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   liturgicalColor: string;
@@ -27,12 +26,6 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
   const [honeypot, setHoneypot] = useState("");
 
   const colorTheme = getLiturgicalColorClass(liturgicalColor);
-
-  // Verifica se o Supabase está configurado com chaves reais
-  const isSupabaseConfigured = () => {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    return url && !url.includes("placeholder-project");
-  };
 
   const formatPhone = (value: string) => {
     if (!value) return "";
@@ -56,7 +49,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Função de envio direto para o n8n
+  // Envio direto para o n8n de produção
   const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
     const N8N_WEBHOOK_URL = "https://n8n.anselmotech.online/webhook/cadastro";
     
@@ -97,36 +90,17 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
       return;
     }
 
+    // Proteção Honeypot simples no frontend
+    if (honeypot) {
+      toast.success("Cadastro enviado com sucesso! ✨");
+      setPhone("");
+      setName("");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Se o Supabase estiver configurado, tenta a Edge Function. Caso contrário, vai direto para o n8n.
-      if (isSupabaseConfigured()) {
-        try {
-          const { data, error } = await supabase.functions.invoke("subscribe", {
-            body: {
-              action: "subscribe",
-              name: name.trim(),
-              phone: digitsOnly,
-              email: email.trim(),
-              city: city.trim(),
-              birthdate: birthdate,
-              honeypot: honeypot,
-            },
-            headers: {
-              "x-api-key": "liturgia-diaria-secret-key-2026"
-            }
-          });
-
-          if (error) throw error;
-        } catch (edgeError) {
-          console.warn("Edge Function falhou, acionando envio direto para o n8n...", edgeError);
-          await sendDirectToN8N("subscribe", digitsOnly);
-        }
-      } else {
-        // Envia direto para o n8n sem tentar o Supabase
-        await sendDirectToN8N("subscribe", digitsOnly);
-      }
-
+      await sendDirectToN8N("subscribe", digitsOnly);
       toast.success("Cadastro enviado com sucesso! ✨");
       setPhone("");
       setName("");
@@ -152,28 +126,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      if (isSupabaseConfigured()) {
-        try {
-          const { data, error } = await supabase.functions.invoke("subscribe", {
-            body: {
-              action: "unsubscribe",
-              phone: digitsOnly,
-              honeypot: honeypot,
-            },
-            headers: {
-              "x-api-key": "liturgia-diaria-secret-key-2026"
-            }
-          });
-
-          if (error) throw error;
-        } catch (edgeError) {
-          console.warn("Edge Function falhou, acionando cancelamento direto no n8n...", edgeError);
-          await sendDirectToN8N("unsubscribe", digitsOnly);
-        }
-      } else {
-        await sendDirectToN8N("unsubscribe", digitsOnly);
-      }
-
+      await sendDirectToN8N("unsubscribe", digitsOnly);
       toast.success("Solicitação de cancelamento enviada com sucesso!");
       setPhone("");
       setShowUnsubscribe(false);
