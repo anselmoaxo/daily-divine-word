@@ -50,6 +50,34 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
+  // Função de envio direto para o n8n como Fallback robusto
+  const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
+    const N8N_WEBHOOK_URL = "https://n8n.anselmotech.online/webhook/cadastro";
+    
+    const params = new URLSearchParams({
+      action: actionType,
+      name: actionType === "subscribe" ? name.trim() : "",
+      phone: phoneNumber,
+      email: actionType === "subscribe" ? email.trim() : "",
+      city: actionType === "subscribe" ? city.trim() : "",
+      birthdate: actionType === "subscribe" ? birthdate : "",
+      consent: "true",
+      timestamp: new Date().toISOString(),
+      source: "liturgia.anselmotech.online"
+    });
+
+    const response = await fetch(`${N8N_WEBHOOK_URL}?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "X-API-Key": "n8n-secure-auth-token-2026"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consent) {
@@ -65,23 +93,29 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      // Chamada segura para a Supabase Edge Function enviando todos os campos
-      const { data, error } = await supabase.functions.invoke("subscribe", {
-        body: {
-          action: "subscribe",
-          name: name.trim(),
-          phone: digitsOnly,
-          email: email.trim(),
-          city: city.trim(),
-          birthdate: birthdate,
-          honeypot: honeypot,
-        },
-        headers: {
-          "x-api-key": "liturgia-diaria-secret-key-2026"
-        }
-      });
+      // 1. Tenta via Edge Function do Supabase
+      try {
+        const { data, error } = await supabase.functions.invoke("subscribe", {
+          body: {
+            action: "subscribe",
+            name: name.trim(),
+            phone: digitsOnly,
+            email: email.trim(),
+            city: city.trim(),
+            birthdate: birthdate,
+            honeypot: honeypot,
+          },
+          headers: {
+            "x-api-key": "liturgia-diaria-secret-key-2026"
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (edgeError) {
+        console.warn("Edge Function indisponível, acionando envio direto para o n8n...", edgeError);
+        // 2. Fallback: Envia diretamente para o n8n
+        await sendDirectToN8N("subscribe", digitsOnly);
+      }
 
       toast.success("Cadastro enviado com sucesso! ✨");
       setPhone("");
@@ -108,18 +142,25 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("subscribe", {
-        body: {
-          action: "unsubscribe",
-          phone: digitsOnly,
-          honeypot: honeypot,
-        },
-        headers: {
-          "x-api-key": "liturgia-diaria-secret-key-2026"
-        }
-      });
+      // 1. Tenta via Edge Function do Supabase
+      try {
+        const { data, error } = await supabase.functions.invoke("subscribe", {
+          body: {
+            action: "unsubscribe",
+            phone: digitsOnly,
+            honeypot: honeypot,
+          },
+          headers: {
+            "x-api-key": "liturgia-diaria-secret-key-2026"
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (edgeError) {
+        console.warn("Edge Function indisponível, acionando cancelamento direto no n8n...", edgeError);
+        // 2. Fallback: Envia diretamente para o n8n
+        await sendDirectToN8N("unsubscribe", digitsOnly);
+      }
 
       toast.success("Solicitação de cancelamento enviada com sucesso!");
       setPhone("");
