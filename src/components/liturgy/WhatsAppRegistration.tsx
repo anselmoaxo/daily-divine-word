@@ -10,6 +10,9 @@ export default function WhatsAppRegistration() {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [city, setCity] = useState("");
+  const [birthdate, setBirthdate] = useState("");
   const [consent, setConsent] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
 
@@ -53,11 +56,14 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      // Construindo os parâmetros da URL para a requisição GET
+      // Construindo os parâmetros da URL para a requisição GET com os novos campos
       const params = new URLSearchParams({
         action: "subscribe",
         name: name.trim(),
         phone: digitsOnly,
+        email: email.trim(),
+        city: city.trim(),
+        birthdate: birthdate,
         consent: "true",
         timestamp: new Date().toISOString(),
         source: "liturgia.anselmotech.online"
@@ -74,6 +80,9 @@ export default function WhatsAppRegistration() {
       toast.success("Cadastro enviado com sucesso! Verifique seu n8n. ✨");
       setPhone("");
       setName("");
+      setEmail("");
+      setCity("");
+      setBirthdate("");
       setConsent(false);
     } catch (error) {
       console.error("Erro ao enviar para o n8n:", error);
@@ -93,7 +102,6 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      // Construindo os parâmetros da URL para a requisição GET de cancelamento
       const params = new URLSearchParams({
         action: "unsubscribe",
         phone: digitsOnly,
@@ -145,29 +153,70 @@ export default function WhatsAppRegistration() {
         {!showUnsubscribe ? (
           <div className="space-y-8">
             <form onSubmit={handleSubmit} className="space-y-5 text-left bg-card/50 backdrop-blur-sm p-6 rounded-2xl border border-border/40 shadow-xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Nome</Label>
-                  <Input 
-                    id="name"
-                    placeholder="Seu nome" 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
-                    required
-                  />
+              <div className="space-y-4">
+                {/* Nome e WhatsApp */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Nome (obrigatório)</Label>
+                    <Input 
+                      id="name"
+                      placeholder="Seu nome" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">WhatsApp (obrigatório)</Label>
+                    <Input 
+                      id="phone"
+                      type="tel"
+                      placeholder="(00) 00000-0000" 
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                      required
+                    />
+                  </div>
                 </div>
 
+                {/* E-mail e Cidade */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">E-mail (opcional)</Label>
+                    <Input 
+                      id="email"
+                      type="email"
+                      placeholder="seu@email.com" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Cidade (opcional)</Label>
+                    <Input 
+                      id="city"
+                      placeholder="Sua cidade" 
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                    />
+                  </div>
+                </div>
+
+                {/* Data de Nascimento */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">WhatsApp</Label>
+                  <Label htmlFor="birthdate" className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-60">Data de nascimento (opcional)</Label>
                   <Input 
-                    id="phone"
-                    type="tel"
-                    placeholder="(00) 00000-0000" 
-                    value={phone}
-                    onChange={handlePhoneChange}
+                    id="birthdate"
+                    type="date"
+                    value={birthdate}
+                    onChange={(e) => setBirthdate(e.target.value)}
                     className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
-                    required
                   />
                 </div>
               </div>
@@ -178,9 +227,10 @@ export default function WhatsAppRegistration() {
                   checked={consent}
                   onCheckedChange={(checked) => setConsent(checked as boolean)}
                   className="mt-1 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                  required
                 />
                 <label htmlFor="consent" className="text-[10px] text-muted-foreground leading-relaxed cursor-pointer select-none">
-                  Concordo em receber a liturgia diária. Seus dados estão protegidos pela LGPD.
+                  Consentimento para receber mensagens (obrigatório). Seus dados estão protegidos pela LGPD.
                 </label>
               </div>
 
