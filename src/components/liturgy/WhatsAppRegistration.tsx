@@ -13,8 +13,8 @@ export default function WhatsAppRegistration() {
   const [consent, setConsent] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
 
-  // URL do Webhook do n8n vinda das variáveis de ambiente
-  const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "";
+  // URL do Webhook do n8n (usa a variável de ambiente ou o webhook fornecido como padrão)
+  const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://n8n.anselmotech.online/webhook-test/45c81e36-9481-4ac3-a209-fdf4dcc74e1d";
 
   const formatPhone = (value: string) => {
     if (!value) return "";
@@ -53,28 +53,23 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      if (!WEBHOOK_URL) {
-        console.warn("Aviso: VITE_N8N_WEBHOOK_URL não está configurada. Simulando envio.");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } else {
-        const response = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "subscribe",
-            name: name.trim(),
-            phone: digitsOnly,
-            consent: true,
-            timestamp: new Date().toISOString(),
-            source: "liturgia.anselmotech.online"
-          }),
-        });
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "subscribe",
+          name: name.trim(),
+          phone: digitsOnly,
+          consent: true,
+          timestamp: new Date().toISOString(),
+          source: "liturgia.anselmotech.online"
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error("Falha ao enviar dados para o servidor.");
-        }
+      if (!response.ok) {
+        throw new Error("Falha ao enviar dados para o servidor.");
       }
 
       toast.success("Cadastro realizado com sucesso! ✨");
@@ -97,28 +92,23 @@ export default function WhatsAppRegistration() {
       return;
     }
 
-    setLoading(true);
+  	setLoading(true);
     try {
-      if (!WEBHOOK_URL) {
-        console.warn("Aviso: VITE_N8N_WEBHOOK_URL não está configurada. Simulando cancelamento.");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } else {
-        const response = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "unsubscribe",
-            phone: digitsOnly,
-            timestamp: new Date().toISOString(),
-            source: "liturgia.anselmotech.online"
-          }),
-        });
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "unsubscribe",
+          phone: digitsOnly,
+          timestamp: new Date().toISOString(),
+          source: "liturgia.anselmotech.online"
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error("Falha ao processar cancelamento.");
-        }
+      if (!response.ok) {
+        throw new Error("Falha ao processar cancelamento.");
       }
 
       toast.success("Sua solicitação de cancelamento foi enviada.");
