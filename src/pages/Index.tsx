@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchLiturgia, type LiturgiaData } from "@/lib/liturgy-api";
+import { fetchLiturgia, getLiturgicalColorClass, type LiturgiaData } from "@/lib/liturgy-api";
 import LiturgyHeader from "@/components/liturgy/LiturgyHeader";
 import ReadingCard from "@/components/liturgy/ReadingCard";
 import GospelSection from "@/components/liturgy/GospelSection";
@@ -68,6 +68,8 @@ export default function Index() {
   if (error) return <ErrorDisplay message={error} onRetry={() => load(selectedDate)} />;
   if (!liturgia) return null;
 
+  const colorTheme = getLiturgicalColorClass(liturgia.cor);
+
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20">
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -93,21 +95,28 @@ export default function Index() {
               label="Primeira Leitura"
               readings={liturgia.leituras.primeiraLeitura}
               index={1}
+              liturgicalColor={liturgia.cor}
             />
 
             <ReadingCard
               label="Salmo Responsorial"
               readings={liturgia.leituras.salmo}
               index={2}
+              liturgicalColor={liturgia.cor}
             />
 
             <ReadingCard
               label="Segunda Leitura"
               readings={liturgia.leituras.segundaLeitura}
               index={3}
+              liturgicalColor={liturgia.cor}
             />
 
-            <GospelSection readings={liturgia.leituras.evangelho} index={4} />
+            <GospelSection 
+              readings={liturgia.leituras.evangelho} 
+              index={4} 
+              liturgicalColor={liturgia.cor}
+            />
 
             <PrayersSection oracoes={liturgia.oracoes} index={5} />
             <AntiphonsSection antifonas={liturgia.antifonas || {}} index={6} />
@@ -115,7 +124,7 @@ export default function Index() {
             {liturgia.santo && (
               <section className="cnbb-section">
                 <h2 className="cnbb-section-title">SANTO DO DIA</h2>
-                <div className="cnbb-text-body px-4 italic text-center">
+                <div className="cnbb-text-body px-4 italic text-center max-w-[680px] mx-auto">
                   {liturgia.santo}
                 </div>
               </section>
@@ -124,13 +133,13 @@ export default function Index() {
             {liturgia.reflexao && (
               <section className="cnbb-section">
                 <h2 className="cnbb-section-title">REFLEXÃO</h2>
-                <div className="cnbb-text-body px-4 whitespace-pre-wrap text-base md:text-lg">
+                <div className="cnbb-text-body px-4 whitespace-pre-wrap text-base md:text-lg max-w-[680px] mx-auto leading-relaxed">
                   {liturgia.reflexao}
                 </div>
               </section>
             )}
 
-            <WhatsAppRegistration />
+            <WhatsAppRegistration liturgicalColor={liturgia.cor} />
           </motion.div>
         </AnimatePresence>
 
@@ -138,7 +147,7 @@ export default function Index() {
           <Button
             onClick={handleShare}
             size="lg"
-            className="rounded-full px-8 py-6 font-bold shadow-lg hover:scale-105 transition-all"
+            className={`rounded-full px-8 py-6 font-bold shadow-lg hover:scale-105 transition-all ${colorTheme.buttonBg}`}
           >
             <Share2 className="mr-2 h-5 w-5" />
             Compartilhar Liturgia

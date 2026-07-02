@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
-import type { LeituraItem } from "@/lib/liturgy-api";
+import { getLiturgicalColorClass, type LeituraItem } from "@/lib/liturgy-api";
+import AudioPlayer from "./AudioPlayer";
+import { cn } from "@/lib/utils";
 
 interface Props {
   readings: LeituraItem[];
   index: number;
+  liturgicalColor: string;
 }
 
 function renderVerses(raw: string) {
@@ -17,9 +20,10 @@ function renderVerses(raw: string) {
   });
 }
 
-export default function GospelSection({ readings, index }: Props) {
+export default function GospelSection({ readings, index, liturgicalColor }: Props) {
   if (!readings || readings.length === 0) return null;
   const reading = readings[0];
+  const colorTheme = getLiturgicalColorClass(liturgicalColor);
 
   return (
     <motion.section
@@ -29,27 +33,42 @@ export default function GospelSection({ readings, index }: Props) {
       transition={{ duration: 0.6 }}
       className="cnbb-section"
     >
-      <h2 className="cnbb-section-title">EVANGELHO</h2>
+      <div className="flex flex-col items-center mb-6">
+        <h2 className={cn("cnbb-section-title mb-2 transition-colors duration-300", colorTheme.accentText)}>
+          EVANGELHO
+        </h2>
+        
+        {/* Botão de Ouvir (TTS) */}
+        <AudioPlayer 
+          text={`${reading.referencia}. ${reading.titulo || ""}. ${reading.texto}`} 
+          title="Evangelho"
+          colorTheme={colorTheme}
+        />
+      </div>
 
-      <div className="gospel-container">
-        <p className="font-ui text-xs font-bold text-gold mb-4 tracking-[0.15em]">
+      <div className={cn(
+        "gospel-container border-l-[3px] pl-6 py-4 my-10 rounded-r-lg max-w-[680px] mx-auto transition-all duration-300",
+        colorTheme.cardBorder,
+        colorTheme.bg
+      )}>
+        <p className={cn("font-ui text-xs font-bold mb-4 tracking-[0.15em] transition-colors duration-300", colorTheme.accentText)}>
           {reading.referencia}
         </p>
 
         <div className="mb-8">
           <p className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
-            <span className="text-gold mr-3">✠</span>
+            <span className={cn("mr-3 transition-colors duration-300", colorTheme.accentText)}>✠</span>
             {reading.titulo || "Proclamação do Evangelho de Jesus Cristo"}
           </p>
         </div>
 
-        <div className="reading-text text-[17px] md:text-[18px] font-medium">
+        <div className="reading-text text-[17px] md:text-[18px] font-medium max-w-none">
           {renderVerses(reading.texto)}
         </div>
 
-        <div className="mt-10 pt-6 border-t border-gold/10">
-          <p className="font-body text-base">— Palavra da Salvação.</p>
-          <p className="font-body text-base font-bold mt-1">— Glória a vós, Senhor.</p>
+        <div className="mt-10 pt-6 border-t border-border/20">
+          <p className="font-body text-base text-muted-foreground">— Palavra da Salvação.</p>
+          <p className="font-body text-base font-bold mt-1 text-foreground">— Glória a vós, Senhor.</p>
         </div>
       </div>
     </motion.section>

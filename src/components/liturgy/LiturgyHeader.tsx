@@ -22,7 +22,7 @@ interface Props {
   onToggleDark: () => void;
 }
 
-const Crucifix = () => (
+const Crucifix = ({ colorClass }: { colorClass: string }) => (
   <svg 
     width="32" 
     height="40" 
@@ -32,17 +32,12 @@ const Crucifix = () => (
     strokeWidth="1.2" 
     strokeLinecap="round" 
     strokeLinejoin="round" 
-    className="crucifix-svg mx-auto mb-4 text-gold"
+    className={cn("crucifix-svg mx-auto mb-4 transition-colors duration-300", colorClass)}
   >
-    {/* Haste Vertical Principal */}
     <path d="M12 2v28" />
-    {/* Haste Horizontal (Patibulum) */}
     <path d="M6 10h12" />
-    {/* Placa INRI (Titulus Crucis) */}
     <path d="M10 4h4" className="opacity-60" />
-    {/* Base (Gólgota) */}
     <path d="M9 30h6" strokeWidth="1" />
-    {/* Detalhes das extremidades (Estilo Trevo/Botão) */}
     <circle cx="12" cy="2" r="0.5" fill="currentColor" />
     <circle cx="6" cy="10" r="0.5" fill="currentColor" />
     <circle cx="18" cy="10" r="0.5" fill="currentColor" />
@@ -51,7 +46,7 @@ const Crucifix = () => (
 );
 
 export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDateChange, darkMode, onToggleDark }: Props) {
-  const colorClasses = getLiturgicalColorClass(cor);
+  const colorTheme = getLiturgicalColorClass(cor);
   const formattedDate = formatPortugueseDate(data);
 
   const handleNavigate = (days: number) => {
@@ -71,21 +66,21 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
     <header className="text-center mb-16">
       <div className="flex justify-between items-center mb-12">
         <div className="w-10" />
-        <Crucifix />
+        <Crucifix colorClass={colorTheme.accentText} />
         <button
           onClick={onToggleDark}
-          className="p-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 rounded-full hover:bg-secondary/60 transition-colors border border-transparent hover:border-border/40"
           aria-label="Alternar tema"
         >
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          {darkMode ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-stone-600" />}
         </button>
       </div>
 
       <div className="space-y-3 mb-10">
-        <h1 className="text-[42px] font-display font-semibold tracking-tight leading-tight">
+        <h1 className="text-[40px] md:text-[46px] font-display font-bold tracking-tight leading-tight text-foreground">
           Liturgia Diária
         </h1>
-        <p className="text-[12px] font-ui tracking-[0.3em] uppercase opacity-60 font-medium">
+        <p className="text-[11px] font-ui tracking-[0.3em] uppercase opacity-60 font-semibold">
           Igreja Católica Apostólica Romana
         </p>
       </div>
@@ -98,19 +93,24 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
         animate={{ opacity: 1, y: 0 }}
         className="mt-10 mb-8"
       >
-        <p className="text-[22px] font-display font-medium mb-3">
+        <p className="text-[22px] md:text-[24px] font-display font-semibold mb-3 text-foreground">
           {formattedDate}
         </p>
-        <p className="text-lg text-gold font-semibold italic max-w-xl mx-auto px-4 leading-relaxed">
+        <p className={cn("text-lg font-semibold italic max-w-xl mx-auto px-4 leading-relaxed transition-colors duration-300", colorTheme.accentText)}>
           {liturgia}
         </p>
       </motion.div>
 
       {cor && (
         <div className="mb-12">
-          <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase border bg-[#f5f0e6] dark:bg-white/5 border-[#d6c7a1] text-[#7a5c2e] dark:text-gold`}>
-            <span className={`w-2 h-2 rounded-full ${colorClasses.dot}`} />
-            Cor: {cor}
+          <span className={cn(
+            "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase border transition-all duration-300",
+            colorTheme.bg,
+            colorTheme.border,
+            colorTheme.text
+          )}>
+            <span className={cn("w-2.5 h-2.5 rounded-full shadow-sm", colorTheme.dot)} />
+            Cor Litúrgica: {cor}
           </span>
         </div>
       )}
@@ -118,16 +118,25 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
       {/* Navigation */}
       <div className="flex flex-col items-center gap-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => handleNavigate(-1)} className="nav-btn">
+          <button 
+            onClick={() => handleNavigate(-1)} 
+            className="nav-btn border border-border/40 hover:border-border"
+          >
             <ChevronLeft size={16} /> Ontem
           </button>
           <button 
             onClick={handleToday} 
-            className="nav-btn bg-gold text-white hover:bg-gold/80"
+            className={cn(
+              "nav-btn font-bold shadow-md hover:scale-105 transition-all",
+              colorTheme.buttonBg
+            )}
           >
             Hoje
           </button>
-          <button onClick={() => handleNavigate(1)} className="nav-btn">
+          <button 
+            onClick={() => handleNavigate(1)} 
+            className="nav-btn border border-border/40 hover:border-border"
+          >
             Amanhã <ChevronRight size={16} />
           </button>
         </div>
@@ -138,11 +147,11 @@ export default function LiturgyHeader({ data, liturgia, cor, selectedDate, onDat
             <Button
               variant={"outline"}
               className={cn(
-                "w-[240px] justify-start text-left font-normal border-border bg-card hover:bg-secondary/50 transition-all",
+                "w-[240px] justify-start text-left font-normal border-border bg-card hover:bg-secondary/50 transition-all shadow-sm",
                 !selectedDate && "text-muted-foreground"
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4 text-gold" />
+              <CalendarIcon className={cn("mr-2 h-4 w-4", colorTheme.accentText)} />
               {selectedDate ? (
                 format(selectedDate, "PPP", { locale: ptBR })
               ) : (
