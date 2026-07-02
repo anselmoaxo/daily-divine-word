@@ -13,12 +13,12 @@ export default function WhatsAppRegistration() {
   const [consent, setConsent] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
 
+  // URL do Webhook do n8n vinda das variáveis de ambiente
+  const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "";
+
   const formatPhone = (value: string) => {
     if (!value) return "";
-    // Remove tudo que não é dígito
     const digits = value.replace(/\D/g, "");
-    
-    // Limita a 11 dígitos (DDD + 9 dígitos)
     const limited = digits.substring(0, 11);
     
     if (limited.length <= 2) {
@@ -53,13 +53,37 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!WEBHOOK_URL) {
+        console.warn("Aviso: VITE_N8N_WEBHOOK_URL não está configurada. Simulando envio.");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } else {
+        const response = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "subscribe",
+            name: name.trim(),
+            phone: digitsOnly,
+            consent: true,
+            timestamp: new Date().toISOString(),
+            source: "liturgia.anselmotech.online"
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Falha ao enviar dados para o servidor.");
+        }
+      }
+
       toast.success("Cadastro realizado com sucesso! ✨");
       setPhone("");
       setName("");
       setConsent(false);
     } catch (error) {
-      toast.error("Erro ao realizar cadastro.");
+      console.error("Erro no webhook:", error);
+      toast.error("Erro ao realizar cadastro. Tente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
@@ -67,13 +91,42 @@ export default function WhatsAppRegistration() {
 
   const handleUnsubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
+    const digitsOnly = phone.replace(/\D/g, "");
+    if (digitsOnly.length < 10) {
+      toast.error("Por favor, insira um número de telefone válido.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!WEBHOOK_URL) {
+        console.warn("Aviso: VITE_N8N_WEBHOOK_URL não está configurada. Simulando cancelamento.");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } else {
+        const response = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "unsubscribe",
+            phone: digitsOnly,
+            timestamp: new Date().toISOString(),
+            source: "liturgia.anselmotech.online"
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Falha ao processar cancelamento.");
+        }
+      }
+
       toast.success("Sua solicitação de cancelamento foi enviada.");
+      setPhone("");
       setShowUnsubscribe(false);
     } catch (error) {
-      toast.error("Erro ao processar cancelamento.");
+      console.error("Erro no webhook de cancelamento:", error);
+      toast.error("Erro ao processar cancelamento. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -81,7 +134,6 @@ export default function WhatsAppRegistration() {
 
   return (
     <section className="cnbb-section bg-gradient-to-b from-secondary/30 to-background rounded-[2rem] p-8 md:p-12 my-8 border border-gold/20 shadow-sm overflow-hidden relative">
-      {/* Decorative element */}
       <div className="absolute -top-12 -right-12 w-32 h-32 bg-gold/5 rounded-full blur-3xl" />
       
       <div className="max-w-lg mx-auto text-center relative z-10">
@@ -114,6 +166,7 @@ export default function WhatsAppRegistration() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="bg-background/50 border-border/40 focus:ring-green-500 h-11"
+                    required
                   />
                 </div>
 
@@ -173,7 +226,10 @@ export default function WhatsAppRegistration() {
 
             <button 
               type="button"
-              onClick={() => setShowUnsubscribe(true)}
+              onClick={() => {
+                setPhone("");
+                setShowUnsubscribe(true);
+              }}
               className="group inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all uppercase tracking-[0.15em] font-medium"
             >
               <UserMinus size={12} className="opacity-50 group-hover:opacity-100" />
@@ -205,7 +261,10 @@ export default function WhatsAppRegistration() {
             </Button>
             <button 
               type="button"
-              onClick={() => setShowUnsubscribe(false)}
+              onClick={() => {
+                setPhone("");
+                setShowUnsubscribe(false);
+              }}
               className="w-full text-center text-[10px] text-muted-foreground hover:text-foreground mt-2 uppercase tracking-widest font-bold"
             >
               Voltar para o cadastro
