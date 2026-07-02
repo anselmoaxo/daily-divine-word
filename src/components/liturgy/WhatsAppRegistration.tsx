@@ -53,24 +53,24 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      // Enviamos como text/plain para evitar a requisição preflight OPTIONS do CORS
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: JSON.stringify({
-          action: "subscribe",
-          name: name.trim(),
-          phone: digitsOnly,
-          consent: true,
-          timestamp: new Date().toISOString(),
-          source: "liturgia.anselmotech.online"
-        }),
+      // Construindo os parâmetros da URL para a requisição GET
+      const params = new URLSearchParams({
+        action: "subscribe",
+        name: name.trim(),
+        phone: digitsOnly,
+        consent: "true",
+        timestamp: new Date().toISOString(),
+        source: "liturgia.anselmotech.online"
       });
 
-      // Nota: Se o n8n não retornar cabeçalhos CORS, a resposta pode vir com status 0 ou falhar no JS,
-      // mas o dado CHEGA com sucesso ao n8n. Por isso, tratamos com sucesso se a requisição foi enviada.
+      const response = await fetch(`${WEBHOOK_URL}?${params.toString()}`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao enviar dados para o n8n.");
+      }
+
       toast.success("Cadastro enviado com sucesso! Verifique seu n8n. ✨");
       setPhone("");
       setName("");
@@ -93,18 +93,21 @@ export default function WhatsAppRegistration() {
 
     setLoading(true);
     try {
-      await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: JSON.stringify({
-          action: "unsubscribe",
-          phone: digitsOnly,
-          timestamp: new Date().toISOString(),
-          source: "liturgia.anselmotech.online"
-        }),
+      // Construindo os parâmetros da URL para a requisição GET de cancelamento
+      const params = new URLSearchParams({
+        action: "unsubscribe",
+        phone: digitsOnly,
+        timestamp: new Date().toISOString(),
+        source: "liturgia.anselmotech.online"
       });
+
+      const response = await fetch(`${WEBHOOK_URL}?${params.toString()}`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao processar cancelamento.");
+      }
 
       toast.success("Solicitação de cancelamento enviada com sucesso!");
       setPhone("");
