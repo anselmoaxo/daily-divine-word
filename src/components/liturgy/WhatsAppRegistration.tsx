@@ -28,6 +28,12 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
   const colorTheme = getLiturgicalColorClass(liturgicalColor);
 
+  // Verifica se o Supabase está configurado com chaves reais
+  const isSupabaseConfigured = () => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    return url && !url.includes("placeholder-project");
+  };
+
   const formatPhone = (value: string) => {
     if (!value) return "";
     const digits = value.replace(/\D/g, "");
@@ -50,7 +56,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Função de envio direto para o n8n como Fallback robusto
+  // Função de envio direto para o n8n
   const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
     const N8N_WEBHOOK_URL = "https://n8n.anselmotech.online/webhook/cadastro";
     
@@ -93,27 +99,31 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      // 1. Tenta via Edge Function do Supabase
-      try {
-        const { data, error } = await supabase.functions.invoke("subscribe", {
-          body: {
-            action: "subscribe",
-            name: name.trim(),
-            phone: digitsOnly,
-            email: email.trim(),
-            city: city.trim(),
-            birthdate: birthdate,
-            honeypot: honeypot,
-          },
-          headers: {
-            "x-api-key": "liturgia-diaria-secret-key-2026"
-          }
-        });
+      // Se o Supabase estiver configurado, tenta a Edge Function. Caso contrário, vai direto para o n8n.
+      if (isSupabaseConfigured()) {
+        try {
+          const { data, error } = await supabase.functions.invoke("subscribe", {
+            body: {
+              action: "subscribe",
+              name: name.trim(),
+              phone: digitsOnly,
+              email: email.trim(),
+              city: city.trim(),
+              birthdate: birthdate,
+              honeypot: honeypot,
+            },
+            headers: {
+              "x-api-key": "liturgia-diaria-secret-key-2026"
+            }
+          });
 
-        if (error) throw error;
-      } catch (edgeError) {
-        console.warn("Edge Function indisponível, acionando envio direto para o n8n...", edgeError);
-        // 2. Fallback: Envia diretamente para o n8n
+          if (error) throw error;
+        } catch (edgeError) {
+          console.warn("Edge Function falhou, acionando envio direto para o n8n...", edgeError);
+          await sendDirectToN8N("subscribe", digitsOnly);
+        }
+      } else {
+        // Envia direto para o n8n sem tentar o Supabase
         await sendDirectToN8N("subscribe", digitsOnly);
       }
 
@@ -142,23 +152,25 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      // 1. Tenta via Edge Function do Supabase
-      try {
-        const { data, error } = await supabase.functions.invoke("subscribe", {
-          body: {
-            action: "unsubscribe",
-            phone: digitsOnly,
-            honeypot: honeypot,
-          },
-          headers: {
-            "x-api-key": "liturgia-diaria-secret-key-2026"
-          }
-        });
+      if (isSupabaseConfigured()) {
+        try {
+          const { data, error } = await supabase.functions.invoke("subscribe", {
+            body: {
+              action: "unsubscribe",
+              phone: digitsOnly,
+              honeypot: honeypot,
+            },
+            headers: {
+              "x-api-key": "liturgia-diaria-secret-key-2026"
+            }
+          });
 
-        if (error) throw error;
-      } catch (edgeError) {
-        console.warn("Edge Function indisponível, acionando cancelamento direto no n8n...", edgeError);
-        // 2. Fallback: Envia diretamente para o n8n
+          if (error) throw error;
+        } catch (edgeError) {
+          console.warn("Edge Function falhou, acionando cancelamento direto no n8n...", edgeError);
+          await sendDirectToN8N("unsubscribe", digitsOnly);
+        }
+      } else {
         await sendDirectToN8N("unsubscribe", digitsOnly);
       }
 
