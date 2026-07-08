@@ -1,6 +1,6 @@
+import React, { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
-import { useState, type ReactNode } from "react";
 import type { LeituraItem } from "@/lib/liturgy-api";
 
 interface Props {
