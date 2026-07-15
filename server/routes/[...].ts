@@ -263,20 +263,11 @@ export default defineHandler(async (event) => {
   }
 
   // For any other path (like /politica-de-privacidade), serve the SPA shell (index.html)
-  // We'll read the index.html file from the public directory.
-  // Since we are in a Nitro server, we can use `event.node.res` to sendfile, but simpler: return the HTML as string.
-  // We'll read the file from disk using Node fs (available in Nitro).
-  // However, to avoid complexity, we can redirect to root? But we want to keep client-side routes.
-  // We'll return the index.html content.
+  // We'll read the index.html file from the project root.
   try {
-    // In Nitro, we can use `await readFile` from 'node:fs/promises' but we need to import.
-    // Instead, we can use `event.context.nuxt`? Not available.
-    // We'll fallback to sending a simple shell that loads the SPA.
-    // Since the SPA is built and served from /assets, we can just return the index.html from the public folder.
-    // We'll assume the file is at `../../public/index.html` relative to this file.
     const fs = await import('node:fs');
     const path = await import('node:path');
-    const filePath = path.resolve(process.cwd(), 'public', 'index.html');
+    const filePath = path.resolve(process.cwd(), 'index.html');
     const html = await fs.promises.readFile(filePath, 'utf-8');
     return {
       status: 200,
