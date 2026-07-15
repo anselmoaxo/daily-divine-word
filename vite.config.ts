@@ -2,8 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-import { nitro } from "nitro/vite";
-
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
@@ -13,7 +11,7 @@ export default defineConfig({
       overlay: false,
     },
   },
-  plugins: [react(), nitro()],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
