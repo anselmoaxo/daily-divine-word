@@ -13,19 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Validar chave de API secreta entre o Frontend e esta Edge Function
-    const apiKey = req.headers.get("x-api-key");
-    const EXPECTED_API_KEY = Deno.env.get("FRONTEND_API_KEY") || "liturgia-diaria-secret-key-2026";
-
-    if (apiKey !== EXPECTED_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado. Chave de API inválida." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 2. Obter dados do corpo da requisição
     const body = await req.json();
+
     const { action, name, phone, email, city, birthdate, honeypot } = body;
 
     // 3. Proteção Honeypot (se o campo invisível estiver preenchido, é um bot)
