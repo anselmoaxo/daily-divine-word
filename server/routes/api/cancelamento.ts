@@ -2,6 +2,13 @@ import { defineHandler, useRuntimeConfig } from "nitro";
 import { readBody, createError } from "nitro/h3";
 
 export default defineHandler(async (event) => {
+  if (event.method !== "POST") {
+    throw createError({
+      statusCode: 405,
+      statusMessage: "Método não permitido.",
+    });
+  }
+
   const config = useRuntimeConfig(event);
   const webhookUrl = config.n8nCancelamentoUrl;
   const apiKey = config.n8nApiKey;
