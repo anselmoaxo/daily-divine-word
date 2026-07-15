@@ -49,8 +49,24 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Envio direto para o n8n de produção
+  // Envio seguro: inscrição vai direto para o n8n e cancelamento passa pelo servidor
   const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
+    if (actionType === "unsubscribe") {
+      const response = await fetch("/api/cancelamento", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone: phoneNumber }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
+      }
+
+      return;
+    }
+
     const N8N_WEBHOOK_URL = "https://n8n.anselmotech.online/webhook/cadastro";
     
     const params = new URLSearchParams({
