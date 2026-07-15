@@ -49,7 +49,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Envio seguro: inscrição vai direto para o n8n e cancelamento passa pelo servidor
+  // Envio seguro: cadastro e cancelamento passam pelo servidor
   const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
     if (actionType === "unsubscribe") {
       const response = await fetch("/api/cancelamento", {
@@ -67,25 +67,19 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
       return;
     }
 
-    const N8N_WEBHOOK_URL = "https://n8n.anselmotech.online/webhook/cadastro";
-    
-    const params = new URLSearchParams({
-      action: actionType,
-      name: actionType === "subscribe" ? name.trim() : "",
-      phone: phoneNumber,
-      email: actionType === "subscribe" ? email.trim() : "",
-      city: actionType === "subscribe" ? city.trim() : "",
-      birthdate: actionType === "subscribe" ? birthdate : "",
-      consent: "true",
-      timestamp: new Date().toISOString(),
-      source: "liturgia.anselmotech.online"
-    });
-
-    const response = await fetch(`${N8N_WEBHOOK_URL}?${params.toString()}`, {
-      method: "GET",
+    const response = await fetch("/api/cadastro", {
+      method: "POST",
       headers: {
-        "X-API-Key": "n8n-secure-auth-token-2026"
-      }
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+        phone: phoneNumber,
+        email: email.trim(),
+        city: city.trim(),
+        birthdate,
+        honeypot,
+      }),
     });
 
     if (!response.ok) {
