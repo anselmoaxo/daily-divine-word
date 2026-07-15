@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { getLiturgicalColorClass } from "@/lib/liturgy-api";
 
 interface Props {
@@ -49,41 +50,27 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Envio seguro: cadastro e cancelamento passam pelo servidor
+  // Envio seguro via Supabase Edge Functions, sem expor webhook no navegador
   const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
-    if (actionType === "unsubscribe") {
-      const response = await fetch("/api/cancelamento", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone: phoneNumber }),
-      });
+    const functionName = actionType === "unsubscribe" ? "cancelamento" : "subscribe";
+    const payload =
+      actionType === "unsubscribe"
+        ? { phone: phoneNumber, honeypot }
+        : {
+            name: name.trim(),
+            phone: phoneNumber,
+            email: email.trim(),
+            city: city.trim(),
+            birthdate,
+            honeypot,
+          };
 
-      if (!response.ok) {
-        throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
-      }
-
-      return;
-    }
-
-    const response = await fetch("/api/cadastro", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: name.trim(),
-        phone: phoneNumber,
-        email: email.trim(),
-        city: city.trim(),
-        birthdate,
-        honeypot,
-      }),
+    const { error } = await supabase.functions.invoke(functionName, {
+      body: payload,
     });
 
-    if (!response.ok) {
-      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
+    if (error) {
+      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${error.message})`);
     }
   };
 
