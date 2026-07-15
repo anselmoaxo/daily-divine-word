@@ -1,5 +1,5 @@
 import { defineHandler } from "nitro";
-import { readBody, createError } from "nitro/h3";
+import { createError, readBody } from "nitro/h3";
 
 const webhookUrl = "https://n8n.anselmotech.online/webhook/cadastro";
 const apiKey = "n8n-secure-auth-token-2026";
@@ -13,7 +13,6 @@ export default defineHandler(async (event) => {
   }
 
   const body = await readBody<{
-
     name?: string;
     phone?: string;
     email?: string;
@@ -40,29 +39,29 @@ export default defineHandler(async (event) => {
     });
   }
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
+  const params = new URLSearchParams({
+    action: "subscribe",
+    name: body.name,
+    phone: body.phone,
+    email: body.email || "",
+    city: body.city || "",
+    birthdate: body.birthdate || "",
+    consent: "true",
+    timestamp: new Date().toISOString(),
+    source: "liturgia.anselmotech.online",
+  });
+
+  const response = await fetch(`${webhookUrl}?${params.toString()}`, {
+    method: "GET",
     headers: {
-      "Content-Type": "application/json",
       "X-API-Key": apiKey,
     },
-    body: JSON.stringify({
-      action: "subscribe",
-      name: body.name,
-      phone: body.phone,
-      email: body.email || "",
-      city: body.city || "",
-      birthdate: body.birthdate || "",
-      consent: true,
-      timestamp: new Date().toISOString(),
-      source: "liturgia.anselmotech.online",
-    }),
   });
 
   if (!response.ok) {
     throw createError({
       statusCode: 502,
-      statusMessage: "Erro ao encaminhar a inscrição.",
+      statusMessage: "O serviço de cadastro recusou a solicitação.",
     });
   }
 
