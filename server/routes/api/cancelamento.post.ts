@@ -1,7 +1,18 @@
-import { defineHandler } from "nitro";
+import { defineHandler, useRuntimeConfig } from "nitro";
 import { readBody, createError } from "nitro/h3";
 
 export default defineHandler(async (event) => {
+  const config = useRuntimeConfig(event);
+  const webhookUrl = config.n8nCancelamentoUrl;
+  const apiKey = config.n8nApiKey;
+
+  if (!webhookUrl || !apiKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Configuração do n8n ausente.",
+    });
+  }
+
   const body = await readBody<{ phone?: string }>(event);
 
   if (!body?.phone) {
@@ -11,11 +22,11 @@ export default defineHandler(async (event) => {
     });
   }
 
-  const response = await fetch("https://n8n.anselmotech.online/webhook-test/cancelamento", {
+  const response = await fetch(webhookUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-API-Key": "n8n-secure-auth-token-2026",
+      "X-API-Key": apiKey,
     },
     body: JSON.stringify({
       action: "unsubscribe",
