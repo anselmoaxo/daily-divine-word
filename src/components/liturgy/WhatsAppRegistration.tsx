@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { getLiturgicalColorClass } from "@/lib/liturgy-api";
 
 interface Props {
@@ -50,12 +49,12 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Envio seguro via Supabase Edge Functions, sem expor webhook no navegador
+  // Envio seguro pelo servidor do app, sem expor os webhooks no navegador
   const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
-    const functionName = actionType === "unsubscribe" ? "cancelamento" : "subscribe";
+    const endpoint = actionType === "unsubscribe" ? "/api/cancelamento" : "/api/cadastro";
     const payload =
       actionType === "unsubscribe"
-        ? { phone: phoneNumber, honeypot }
+        ? { phone: phoneNumber }
         : {
             name: name.trim(),
             phone: phoneNumber,
@@ -65,12 +64,16 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
             honeypot,
           };
 
-    const { error } = await supabase.functions.invoke(functionName, {
-      body: payload,
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
-    if (error) {
-      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${error.message})`);
+    if (!response.ok) {
+      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
     }
   };
 

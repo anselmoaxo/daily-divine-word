@@ -1,22 +1,14 @@
-import { defineHandler, useRuntimeConfig } from "nitro";
+import { defineHandler } from "nitro";
 import { readBody, createError } from "nitro/h3";
+
+const webhookUrl = "https://n8n.anselmotech.online/webhook-test/cancelamento";
+const apiKey = "n8n-secure-auth-token-2026";
 
 export default defineHandler(async (event) => {
   if (event.method !== "POST") {
     throw createError({
       statusCode: 405,
       statusMessage: "Método não permitido.",
-    });
-  }
-
-  const config = useRuntimeConfig(event);
-  const webhookUrl = config.n8nCancelamentoUrl;
-  const apiKey = config.n8nApiKey;
-
-  if (!webhookUrl || !apiKey) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Configuração do n8n ausente.",
     });
   }
 

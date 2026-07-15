@@ -1,5 +1,8 @@
-import { defineHandler, useRuntimeConfig } from "nitro";
+import { defineHandler } from "nitro";
 import { readBody, createError } from "nitro/h3";
+
+const webhookUrl = "https://n8n.anselmotech.online/webhook/cadastro";
+const apiKey = "n8n-secure-auth-token-2026";
 
 export default defineHandler(async (event) => {
   if (event.method !== "POST") {
@@ -9,18 +12,8 @@ export default defineHandler(async (event) => {
     });
   }
 
-  const config = useRuntimeConfig(event);
-  const webhookUrl = config.n8nCadastroUrl;
-  const apiKey = config.n8nApiKey;
-
-  if (!webhookUrl || !apiKey) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Configuração do n8n ausente.",
-    });
-  }
-
   const body = await readBody<{
+
     name?: string;
     phone?: string;
     email?: string;
