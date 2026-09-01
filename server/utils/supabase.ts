@@ -11,6 +11,27 @@ function runtimeCredentials() {
   return { url: config.supabaseUrl.replace(/\/$/, ""), key: config.supabaseServiceRoleKey };
 }
 
+export type AuthenticatedUser = {
+  id: string;
+  email?: string;
+  phone?: string;
+  app_metadata?: Record<string, unknown>;
+};
+
+export async function getAuthenticatedUser(accessToken: string): Promise<AuthenticatedUser | null> {
+  const { url, key } = runtimeCredentials();
+  try {
+    const response = await fetch(`${url}/auth/v1/user`, {
+      headers: { apikey: key, Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return null;
+    return await response.json() as AuthenticatedUser;
+  } catch {
+    throw createError({ statusCode: 502, statusMessage: "Não foi possível validar a autenticação." });
+  }
+}
+
 async function request(path: string, init: RequestInit) {
   const { url, key } = runtimeCredentials();
   try {
@@ -47,6 +68,6 @@ export async function findClienteComServicos(phone: string) {
   return response.json();
 }
 
-export function cancelServico(serviceId: string, payload: Record<string, unknown>) {
-  return request(`whatsapp_servicos?id=eq.${encodeURIComponent(serviceId)}&status=eq.ATIVO`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(payload) });
+export function cancelServico(serviceId: string, cadastroId: string, payload: Record<string, unknown>) {
+  return request(`whatsapp_servicos?id=eq.${encodeURIComponent(serviceId)}&cadastro_id=eq.${encodeURIComponent(cadastroId)}&status=eq.ATIVO`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload) });
 }

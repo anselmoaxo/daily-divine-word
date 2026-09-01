@@ -42,9 +42,7 @@ export const cancelamentoConfirmSchema = z.object({
   phone: phoneSchema,
   serviceId: z.string().uuid(),
   confirm: z.literal(true),
-  responsibleUser: z.string().trim().min(2).max(100),
   reason: z.string().trim().min(2).max(500),
-  lookupPhone: phoneSchema,
 }).strict();
 
 type RequestHeaders = Record<string, string | undefined>;

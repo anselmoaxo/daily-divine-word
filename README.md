@@ -19,3 +19,11 @@ corepack pnpm dev
 ```
 
 No n8n, conecte-se ao Supabase usando uma credencial segura e faça leitura periódica da tabela `public.whatsapp_cadastros` e dos serviços em `public.whatsapp_servicos`. O n8n não grava nem altera dados do sistema: apenas lê os registros pendentes e envia a mensagem pelo WhatsApp.
+
+## Autorização de cancelamentos
+
+`POST /api/cancelamento` exige um access token válido do Supabase Auth no cabeçalho
+`Authorization: Bearer <token>`. Além da autenticação, o usuário precisa ter `admin`
+ou `cancellation_admin` em `app_metadata.role`/`app_metadata.roles`. Metadados de
+usuário (`user_metadata`) e o nome do responsável enviado no corpo nunca são usados
+para autorização ou auditoria. O serviço também precisa pertencer ao telefone consultado.
