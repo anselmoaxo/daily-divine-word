@@ -1,8 +1,13 @@
 import { defineHandler } from "nitro";
-import { createError, readBody } from "nitro/h3";
-
-const webhookUrl = "https://n8n.anselmotech.online/webhook/cadastro";
-const apiKey = "n8n-secure-auth-token-2026";
+import { createError, getRequestHeaders, readBody } from "nitro/h3";
+import {
+  assertBodySize,
+  assertRateLimit,
+  cadastroSchema,
+  clientIdentifier,
+  normalizePhone,
+} from "../../utils/subscription";
+import { createCadastro, createServico } from "../../utils/supabase";
 
 export default defineHandler(async (event) => {
   if (event.method !== "POST") {
@@ -12,58 +17,40 @@ export default defineHandler(async (event) => {
     });
   }
 
-  const body = await readBody<{
-    name?: string;
-    phone?: string;
-    email?: string;
-    city?: string;
-    birthdate?: string;
-    honeypot?: string;
-  }>(event);
+  const headers = getRequestHeaders(event);
+  assertBodySize(headers["content-length"]);
+  assertRateLimit(`cadastro:${clientIdentifier(headers)}`, 5, 60_000);
+
+  const rawBody = await readBody(event) as Record<string, unknown>;
+  const parsed = cadastroSchema.safeParse({ ...rawBody, phone: typeof rawBody.phone === "string" ? normalizePhone(rawBody.phone) : rawBody.phone });
+  if (!parsed.success) {
+    throw createError({
+      statusCode: 422,
+      statusMessage: "Dados de cadastro inválidos.",
+      data: { fields: parsed.error.flatten().fieldErrors },
+    });
+  }
+
+  const body = parsed.data;
 
   if (body?.honeypot) {
     return { success: true };
   }
 
-  if (!body?.phone) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "O número de telefone é obrigatório.",
-    });
-  }
-
-  if (!body?.name) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "O nome é obrigatório para inscrição.",
-    });
-  }
-
-  const params = new URLSearchParams({
-    action: "subscribe",
-    name: body.name,
-    phone: body.phone,
-    email: body.email || "",
-    city: body.city || "",
-    birthdate: body.birthdate || "",
-    consent: "true",
-    timestamp: new Date().toISOString(),
-    source: "liturgia.anselmotech.online",
+  const created = await createCadastro({
+    nome: body.name,
+    telefone: body.phone,
+    email: body.email || null,
+    cidade: body.city || null,
+    data_nascimento: body.birthdate || null,
+    consentimento: body.consent,
+    versao_consentimento: body.consentVersion,
+    consentimento_em: new Date().toISOString(),
+    status: "ativo",
+    origem: "liturgia.anselmotech.online",
   });
-
-  const response = await fetch(`${webhookUrl}?${params.toString()}`, {
-    method: "GET",
-    headers: {
-      "X-API-Key": apiKey,
-    },
-  });
-
-  if (!response.ok) {
-    throw createError({
-      statusCode: 502,
-      statusMessage: "O serviço de cadastro recusou a solicitação.",
-    });
-  }
+  const rows = await created.json() as Array<{ id: string }>;
+  if (rows[0]?.id) await createServico(rows[0].id);
 
   return { success: true };
 });

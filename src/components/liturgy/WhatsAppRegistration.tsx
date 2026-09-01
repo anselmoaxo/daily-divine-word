@@ -8,12 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { getLiturgicalColorClass } from "@/lib/liturgy-api";
 
+const CONSENT_VERSION = "2026-09-01";
+type Service = { id: string; nome: string; status: "ATIVO" | "CANCELADO"; criado_em: string };
+
 interface Props {
   liturgicalColor: string;
 }
 
 export default function WhatsAppRegistration({ liturgicalColor }: Props) {
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,6 +25,10 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
   const [birthdate, setBirthdate] = useState("");
   const [consent, setConsent] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState("");
+  const [responsibleUser, setResponsibleUser] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
   
   // Campo Honeypot para proteção anti-bot (invisível para humanos)
   const [honeypot, setHoneypot] = useState("");
@@ -49,8 +57,8 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Envio seguro pelo servidor do app, sem expor os webhooks no navegador
-  const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
+  // Envio seguro para a API do próprio app; o n8n apenas lê os registros no Supabase.
+  const sendToApi = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
     const endpoint = actionType === "unsubscribe" ? "/api/cancelamento" : "/api/cadastro";
     const payload =
       actionType === "unsubscribe"
@@ -61,6 +69,8 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
             email: email.trim(),
             city: city.trim(),
             birthdate,
+            consent,
+            consentVersion: CONSENT_VERSION,
             honeypot,
           };
 
@@ -73,12 +83,14 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     });
 
     if (!response.ok) {
-      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.statusMessage || (response.status === 409 ? "Este telefone já está cadastrado para outro cliente." : `Erro ao salvar cadastro (Status: ${response.status})`));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
     if (!consent) {
       toast.error("Você precisa aceitar os termos para continuar.");
       return;
@@ -92,7 +104,9 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     // Proteção Honeypot simples no frontend
     if (honeypot) {
-      toast.success("Cadastro enviado com sucesso! ✨");
+      const message = "Seja bem-vindo(a)! Sua inscrição foi realizada com sucesso. Você receberá a Liturgia Diária todos os dias, às 8h.";
+      setFeedback({ type: "success", message });
+      toast.success(message);
       setPhone("");
       setName("");
       return;
@@ -100,17 +114,23 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      await sendDirectToN8N("subscribe", digitsOnly);
-      toast.success("Cadastro enviado com sucesso! ✨");
+      await sendToApi("subscribe", digitsOnly);
+      const message = "Seja bem-vindo(a)! Sua inscrição foi realizada com sucesso. Você receberá a Liturgia Diária todos os dias, às 8h.";
+      setFeedback({ type: "success", message });
+      toast.success(message);
       setPhone("");
       setName("");
       setEmail("");
       setCity("");
       setBirthdate("");
       setConsent(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao enviar cadastro:", error);
-      toast.error(error.message || "Erro ao enviar dados. Tente novamente.");
+      const message = error instanceof Error && error.message === "Este telefone já está cadastrado para outro cliente."
+        ? error.message
+        : "Não foi possível concluir a solicitação. Tente novamente.";
+      setFeedback({ type: "error", message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -118,6 +138,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
   const handleUnsubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
     const digitsOnly = phone.replace(/\D/g, "");
     if (digitsOnly.length < 10) {
       toast.error("Por favor, insira um número de telefone válido.");
@@ -126,16 +147,39 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      await sendDirectToN8N("unsubscribe", digitsOnly);
-      toast.success("Solicitação de cancelamento enviada com sucesso!");
-      setPhone("");
-      setShowUnsubscribe(false);
-    } catch (error: any) {
-      console.error("Erro ao enviar cancelamento:", error);
-      toast.error("Erro ao processar cancelamento. Tente novamente.");
+      const response = await fetch("/api/cancelamento", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: digitsOnly }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.statusMessage || "Não foi possível consultar o telefone.");
+      const client = result.client?.[0];
+      const active = (client?.whatsapp_servicos || []).filter((service: Service) => service.status === "ATIVO");
+      if (!client || active.length === 0) { toast.error("Não encontramos serviços ativos para este telefone."); return; }
+      setServices(active);
+      setSelectedService(active.length === 1 ? active[0].id : "");
+    } catch (error: unknown) {
+      const message = "Não foi possível concluir a solicitação. Tente novamente.";
+      setFeedback({ type: "error", message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const confirmCancellation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedback(null);
+    if (!selectedService || !responsibleUser.trim() || !cancelReason.trim()) { toast.error("Selecione o serviço e preencha usuário e motivo."); return; }
+    if (!window.confirm("Confirmar o cancelamento deste serviço?")) return;
+    setLoading(true);
+    try {
+      const digitsOnly = phone.replace(/\D/g, "");
+      const response = await fetch("/api/cancelamento", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: digitsOnly, lookupPhone: digitsOnly, serviceId: selectedService, confirm: true, responsibleUser: responsibleUser.trim(), reason: cancelReason.trim() }) });
+      if (!response.ok) throw new Error("Não foi possível efetivar o cancelamento.");
+      const message = "Inscrição cancelada com sucesso. Você não receberá mais a Liturgia Diária às 8h.";
+      setFeedback({ type: "success", message });
+      toast.success(message);
+      setPhone(""); setServices([]); setSelectedService(""); setResponsibleUser(""); setCancelReason(""); setShowUnsubscribe(false);
+    } catch { const message = "Não foi possível concluir a solicitação. Tente novamente."; setFeedback({ type: "error", message }); toast.error(message); }
+    finally { setLoading(false); }
   };
 
   return (
@@ -143,6 +187,9 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
       <div className="absolute -top-12 -right-12 w-32 h-32 bg-gold/5 rounded-full blur-3xl" />
       
       <div className="max-w-lg mx-auto text-center relative z-10">
+        <div role="status" aria-live="polite" aria-atomic="true" className={`mb-5 min-h-0 rounded-xl px-4 py-3 text-sm font-medium ${feedback ? (feedback.type === "success" ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" : "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-200") : ""}`}>
+          {feedback?.message}
+        </div>
         <div className="inline-flex p-4 rounded-2xl bg-green-100 dark:bg-green-900/30 text-green-600 mb-6 shadow-inner">
           <MessageCircle size={28} />
         </div>
@@ -253,7 +300,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
                   required
                 />
                 <label htmlFor="consent" className="text-[10px] text-muted-foreground leading-relaxed cursor-pointer select-none">
-                  Concordo em receber a liturgia diária. Seus dados estão protegidos pela LGPD. Leia nossa{" "}
+                  Autorizo o uso dos meus dados para receber a liturgia diária pelo WhatsApp, conforme nossa{" "}
                   <Link to="/politica-de-privacidade" className="underline text-gold hover:text-gold/80 font-semibold">
                     Política de Privacidade
                   </Link>.
@@ -266,12 +313,12 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
                 disabled={loading}
               >
                 {loading ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2" />}
-                Quero receber a liturgia!
+                {loading ? "Aguarde…" : "Quero receber a liturgia!"}
               </Button>
 
               <div className="space-y-1.5 pt-2">
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
-                  <Lock size={10} className="text-gold" /> Seus dados estão seguros e protegidos.
+                  <Lock size={10} className="text-gold" /> Seus dados são enviados com conexão segura e usados para este serviço.
                 </p>
               </div>
             </form>
@@ -301,7 +348,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleUnsubscribe} className="space-y-5 text-left bg-card p-8 rounded-2xl border border-destructive/20 animate-fade-in shadow-2xl">
+          services.length === 0 ? (<form onSubmit={handleUnsubscribe} className="space-y-5 text-left bg-card p-8 rounded-2xl border border-destructive/20 animate-fade-in shadow-2xl">
             <div className="space-y-2">
               <Label htmlFor="unsub-phone" className="text-[10px] font-bold uppercase tracking-wider opacity-60">Número para remover</Label>
               <Input 
@@ -321,7 +368,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
               disabled={loading}
             >
               {loading ? <Loader2 className="animate-spin mr-2" /> : <XCircle className="mr-2" />}
-              CONFIRMAR CANCELAMENTO
+              {loading ? "Aguarde…" : "CONSULTAR SERVIÇOS"}
             </Button>
             <button 
               type="button"
@@ -333,7 +380,13 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
             >
               Voltar para o cadastro
             </button>
-          </form>
+          </form>) : (<form onSubmit={confirmCancellation} className="space-y-5 text-left bg-card p-8 rounded-2xl border border-destructive/20 animate-fade-in shadow-2xl">
+            <p className="text-sm font-semibold text-foreground">Selecione o serviço para cancelar:</p>
+            <div className="space-y-2">{services.map((service) => <label key={service.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-3"><input type="radio" name="service" value={service.id} checked={selectedService === service.id} onChange={() => setSelectedService(service.id)} /> <span className="text-sm">{service.nome}</span></label>)}</div>
+            <Input placeholder="Usuário responsável" value={responsibleUser} onChange={(e) => setResponsibleUser(e.target.value)} required />
+            <Input placeholder="Motivo do cancelamento" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} required />
+            <Button type="submit" variant="destructive" className="w-full py-6 font-bold rounded-xl" disabled={loading}>{loading ? <Loader2 className="animate-spin mr-2" /> : <XCircle className="mr-2" />} {loading ? "Aguarde…" : "EFETIVAR CANCELAMENTO"}</Button>
+          </form>)
         )}
       </div>
     </section>
