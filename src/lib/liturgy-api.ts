@@ -81,7 +81,7 @@ export async function fetchLiturgia(date?: Date): Promise<LiturgiaData> {
         extras: Array.isArray(data.oracoes?.extras) ? data.oracoes.extras : [],
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Fetch error:", error);
     throw error;
   }

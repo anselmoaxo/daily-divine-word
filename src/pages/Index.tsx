@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { fetchLiturgia, getLiturgicalColorClass, type LiturgiaData } from "@/lib/liturgy-api";
 import LiturgyHeader from "@/components/liturgy/LiturgyHeader";
 import ReadingCard from "@/components/liturgy/ReadingCard";
@@ -7,11 +7,13 @@ import PrayersSection from "@/components/liturgy/PrayersSection";
 import AntiphonsSection from "@/components/liturgy/AntiphonsSection";
 import LoadingSkeleton from "@/components/liturgy/LoadingSkeleton";
 import ErrorDisplay from "@/components/liturgy/ErrorDisplay";
-import WhatsAppRegistration from "@/components/liturgy/WhatsAppRegistration";
 import { motion, AnimatePresence } from "framer-motion";
-import { Share2 } from "lucide-react";
+import { BookOpen, Church, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import MusicPlayer from "@/components/liturgy/MusicPlayer";
+
+const WhatsAppRegistration = lazy(() => import("@/components/liturgy/WhatsAppRegistration"));
 
 export default function Index() {
   const [liturgia, setLiturgia] = useState<LiturgiaData | null>(null);
@@ -29,8 +31,8 @@ export default function Index() {
     try {
       const data = await fetchLiturgia(date);
       setLiturgia(data);
-    } catch (e: any) {
-      setError(e.message || "Erro ao buscar a liturgia.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erro ao buscar a liturgia.");
     } finally {
       setLoading(false);
     }
@@ -71,9 +73,8 @@ export default function Index() {
   const colorTheme = getLiturgicalColorClass(liturgia.cor);
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/20">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <LiturgyHeader
+    <div className="min-h-screen overflow-hidden bg-background selection:bg-primary/20">
+      <LiturgyHeader
           data={liturgia.data}
           liturgia={liturgia.liturgia}
           cor={liturgia.cor}
@@ -81,7 +82,24 @@ export default function Index() {
           onDateChange={setSelectedDate}
           darkMode={darkMode}
           onToggleDark={() => setDarkMode(!darkMode)}
-        />
+      />
+
+      <main id="conteudo" className="relative mx-auto max-w-5xl px-4 pb-16 pt-40 sm:px-6 sm:pt-36 lg:px-8">
+        <section className="mb-10 grid gap-3 md:grid-cols-3" aria-label="Apresentação da liturgia">
+          {[
+            { icon: BookOpen, title: "Palavra", text: "Leituras proclamadas na celebração de hoje." },
+            { icon: Church, title: "Tradição", text: "Conteúdo conforme o calendário litúrgico romano." },
+            { icon: Heart, title: "Oração", text: "Um momento diário de silêncio, fé e comunhão." },
+          ].map(({ icon: Icon, title, text }) => (
+            <div key={title} className="feature-card">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary"><Icon size={21} /></div>
+              <div>
+                <h2 className="font-display text-lg font-bold">{title}</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text}</p>
+              </div>
+            </div>
+          ))}
+        </section>
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -91,34 +109,36 @@ export default function Index() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <ReadingCard
+            <div id="leituras" className="scroll-mt-24">
+              <ReadingCard
               label="Primeira Leitura"
               readings={liturgia.leituras.primeiraLeitura}
               index={1}
               liturgicalColor={liturgia.cor}
-            />
+              />
 
-            <ReadingCard
+              <ReadingCard
               label="Salmo Responsorial"
               readings={liturgia.leituras.salmo}
               index={2}
               liturgicalColor={liturgia.cor}
-            />
+              />
 
-            <ReadingCard
+              <ReadingCard
               label="Segunda Leitura"
               readings={liturgia.leituras.segundaLeitura}
               index={3}
               liturgicalColor={liturgia.cor}
-            />
+              />
+            </div>
 
-            <GospelSection 
-              readings={liturgia.leituras.evangelho} 
-              index={4} 
-              liturgicalColor={liturgia.cor}
-            />
+            <div id="evangelho" className="scroll-mt-24">
+              <GospelSection readings={liturgia.leituras.evangelho} index={4} liturgicalColor={liturgia.cor} />
+            </div>
 
-            <PrayersSection oracoes={liturgia.oracoes} index={5} />
+            <div id="oracoes" className="scroll-mt-24">
+              <PrayersSection oracoes={liturgia.oracoes} index={5} />
+            </div>
             <AntiphonsSection antifonas={liturgia.antifonas || {}} index={6} />
 
             {liturgia.santo && (
@@ -139,28 +159,44 @@ export default function Index() {
               </section>
             )}
 
-            <WhatsAppRegistration liturgicalColor={liturgia.cor} />
+            <div id="whatsapp" className="scroll-mt-24">
+              <Suspense fallback={<div className="mx-auto my-8 h-80 max-w-3xl animate-pulse rounded-[2rem] bg-muted" aria-label="Carregando cadastro do WhatsApp" />}>
+                <WhatsAppRegistration liturgicalColor={liturgia.cor} />
+              </Suspense>
+            </div>
           </motion.div>
         </AnimatePresence>
 
-        <div className="flex justify-center gap-4 mt-16">
+        <div className="mt-14 flex justify-center gap-4">
           <Button
             onClick={handleShare}
             size="lg"
-            className={`rounded-full px-8 py-6 font-bold shadow-lg hover:scale-105 transition-all ${colorTheme.buttonBg}`}
+            className={`rounded-full px-8 py-6 font-bold shadow-lg transition hover:-translate-y-0.5 ${colorTheme.buttonBg}`}
           >
             <Share2 className="mr-2 h-5 w-5" />
             Compartilhar Liturgia
           </Button>
         </div>
 
-        <footer className="text-center mt-20 pb-10 opacity-50">
-          <div className="liturgy-divider mb-6" />
-          <p className="font-ui text-[10px] tracking-widest uppercase">
-            Dados fornecidos por <a href="https://liturgia.up.railway.app/" target="_blank" rel="noopener noreferrer" className="underline hover:text-gold transition-colors">Liturgia API</a>
-          </p>
-        </footer>
-      </div>
+      </main>
+
+      <footer className="border-t border-border/60 bg-card/70 px-6 py-12">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-7 text-center md:flex-row md:text-left">
+          <div className="flex items-center gap-4">
+            <img src="/papal-keys.svg" alt="Chaves de São Pedro e tiara papal" className="h-16 w-16 object-contain" />
+            <div>
+              <p className="font-display text-lg font-bold">Liturgia Diária</p>
+              <p className="mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">Projeto independente de espiritualidade católica. Não representa nem mantém vínculo oficial com o Vaticano ou a Santa Sé.</p>
+            </div>
+          </div>
+          <div className="text-xs leading-relaxed text-muted-foreground">
+            <p>Dados: <a href="https://liturgia.up.railway.app/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-foreground">Liturgia API</a></p>
+            <p className="mt-1">Símbolo: <a href="https://commons.wikimedia.org/wiki/File:Simple_papal_tiara_and_keys.svg" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-foreground">Alekjds / Wikimedia Commons, CC BY-SA</a></p>
+            <p className="mt-1">Música: <a href="https://commons.wikimedia.org/wiki/File:Schola_Gregoriana-Pater_Noster.ogg" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-foreground">Schola Gregoriana / Wikimedia Commons, CC BY-SA</a></p>
+          </div>
+        </div>
+      </footer>
+      <MusicPlayer />
     </div>
   );
 }

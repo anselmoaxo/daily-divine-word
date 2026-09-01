@@ -1,8 +1,14 @@
 import { defineHandler } from "nitro";
-import { readBody, createError } from "nitro/h3";
-
-const webhookUrl = "https://n8n.anselmotech.online/webhook-test/cancelamento";
-const apiKey = "n8n-secure-auth-token-2026";
+import { readBody, createError, getRequestHeaders } from "nitro/h3";
+import {
+  assertBodySize,
+  assertRateLimit,
+  cancelamentoSchema,
+  clientIdentifier,
+  cancelamentoConfirmSchema,
+  normalizePhone,
+} from "../../utils/subscription";
+import { cancelServico, findClienteComServicos } from "../../utils/supabase";
 
 export default defineHandler(async (event) => {
   if (event.method !== "POST") {
@@ -12,35 +18,24 @@ export default defineHandler(async (event) => {
     });
   }
 
-  const body = await readBody<{ phone?: string }>(event);
+  const headers = getRequestHeaders(event);
+  assertBodySize(headers["content-length"]);
+  assertRateLimit(`cancelamento:${clientIdentifier(headers)}`, 5, 60_000);
 
-  if (!body?.phone) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "O número de telefone é obrigatório.",
-    });
+  const requestBody = await readBody(event) as Record<string, unknown>;
+  const normalizedBody = {
+    ...requestBody,
+    phone: typeof requestBody.phone === "string" ? normalizePhone(requestBody.phone) : requestBody.phone,
+    lookupPhone: typeof requestBody.lookupPhone === "string" ? normalizePhone(requestBody.lookupPhone) : requestBody.lookupPhone,
+  };
+  const parsed = cancelamentoConfirmSchema.safeParse(normalizedBody);
+  const lookup = cancelamentoSchema.safeParse(normalizedBody);
+  if (!parsed.success) {
+    if (!lookup.success) throw createError({ statusCode: 422, statusMessage: "Dados de cancelamento inválidos." });
+    return { client: await findClienteComServicos(normalizePhone(lookup.data.phone)) };
   }
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": apiKey,
-    },
-    body: JSON.stringify({
-      action: "unsubscribe",
-      phone: body.phone,
-      timestamp: new Date().toISOString(),
-      source: "liturgia.anselmotech.online",
-    }),
-  });
-
-  if (!response.ok) {
-    throw createError({
-      statusCode: 502,
-      statusMessage: "Erro ao encaminhar a solicitação de cancelamento.",
-    });
-  }
+  await cancelServico(parsed.data.serviceId, { status: "CANCELADO", cancelado_em: new Date().toISOString(), cancelado_por: parsed.data.responsibleUser, motivo_cancelamento: parsed.data.reason, telefone_consulta: parsed.data.lookupPhone, atualizado_em: new Date().toISOString() });
 
   return { success: true };
 });

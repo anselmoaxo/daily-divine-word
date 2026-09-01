@@ -33,7 +33,7 @@ export default function PrivacyPolicy() {
 
         <div className="prose prose-stone dark:prose-invert font-body space-y-6 text-foreground/90 leading-relaxed">
           <p className="text-sm text-muted-foreground italic">
-            Última atualização: Março de 2026
+            Última atualização: 1º de setembro de 2026 — versão 2026-09-01
           </p>
 
           <p>
@@ -69,6 +69,9 @@ export default function PrivacyPolicy() {
             <p className="font-semibold text-gold">
               Nós nunca venderemos, alugaremos ou compartilharemos seus dados com terceiros para fins publicitários.
             </p>
+            <p>
+              O tratamento é baseado no seu consentimento. Para operar o serviço, os dados passam pela infraestrutura da Vercel, pelas automações n8n e pelo WhatsApp/Meta, que podem processá-los em outros países conforme seus próprios termos e medidas de segurança.
+            </p>
           </section>
 
           <section className="space-y-3 pt-4">
@@ -80,6 +83,9 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               Para cancelar o recebimento das mensagens e remover seus dados de nossa base de envios, basta utilizar o botão <strong>"Desejo cancelar minha inscrição"</strong> na página inicial ou responder "SAIR" diretamente no WhatsApp.
+            </p>
+            <p>
+              Você também pode solicitar confirmação do tratamento, acesso, correção, portabilidade ou exclusão respondendo à conversa do serviço no WhatsApp. Conservamos os dados enquanto a inscrição estiver ativa e, após o cancelamento, somente pelo período necessário para cumprir obrigações legais e prevenir abuso.
             </p>
           </section>
 

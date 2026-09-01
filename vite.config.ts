@@ -6,7 +6,9 @@ import { nitro } from "nitro/vite";
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    host: "::",
+    // Bind to loopback for local development. Binding to IPv6 wildcard (::)
+    // can be blocked by restricted environments and is unnecessary here.
+    host: "127.0.0.1",
     port: 8080,
     hmr: {
       overlay: false,
