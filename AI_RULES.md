@@ -6,7 +6,7 @@
 - **UI Components**: shadcn/ui (built on Radix UI primitives) located in `src/components/ui/`.
 - **Icons**: Lucide React for consistent, accessible iconography.
 - **Data Fetching**: TanStack Query (React Query) for caching and server state management.
-- **Backend**: Supabase for database (PostgreSQL) and Edge Functions.
+- **Backend**: Nitro API routes that validate requests and persist cadastros/cancelamentos in Supabase; n8n only reads Supabase and sends WhatsApp messages.
 - **Routing**: React Router DOM (v6) for client-side navigation.
 - **Animations**: Framer Motion for smooth transitions and liturgical solemnity.
 - **Forms**: React Hook Form combined with Zod for schema-based validation.
@@ -16,7 +16,6 @@
 - **Styling**: Use Tailwind classes exclusively. Avoid custom CSS unless absolutely necessary (defined in `src/index.css`).
 - **Icons**: Use `lucide-react`. Do not install other icon libraries.
 - **State Management**: Use `useQuery` and `useMutation` from TanStack Query for all API interactions. Use React `useState`/`useContext` only for local UI state.
-- **Database**: Use the generated Supabase client in `src/integrations/supabase/client.ts`. Follow the types in `types.ts`.
 - **Utilities**: Use the `cn()` utility from `src/lib/utils.ts` for conditional Tailwind classes.
 - **Animations**: Use `framer-motion` for any entry/exit animations or layout transitions.
 - **Toasts**: Use `sonner` (via the `Sonner` component in `App.tsx`) for non-intrusive notifications.
@@ -35,13 +34,13 @@ This project has a Nitro server layer for backend API routes. A `nitro.config.ts
 
 - Write routes in `server/routes/api/` (NEVER top-level `/api/`).
 - Dynamic routes: `[param].ts`. Method-specific: `hello.get.ts`, `hello.post.ts`.
-- Runtime config: `useRuntimeConfig()` (env vars prefixed with `NITRO_`).
+- Runtime config: import `useRuntimeConfig()` from `"nitro/runtime-config"` (env vars prefixed with `NITRO_`).
 
 ### Imports — read carefully
 
 Imports come from two different sources:
 
-- `defineHandler` and `useRuntimeConfig` are imported from **`"nitro"`**.
+- `defineHandler` is imported from **`"nitro"`**. In Nitro 3 beta, `useRuntimeConfig` is imported from **`"nitro/runtime-config"`**.
 - **Every request/response helper comes from `"nitro/h3"`** — Nitro v3 re-exports h3 utilities through that subpath. Common ones: `readBody`, `readValidatedBody`, `getQuery`, `getRouterParam`, `getRouterParams`, `createError`, `sendError`, `setResponseStatus`, `getRequestHeaders`, `getRequestURL`, `setCookie`, `getCookie`, `deleteCookie`.
 
 Worked example — `server/routes/api/todos.post.ts`:
