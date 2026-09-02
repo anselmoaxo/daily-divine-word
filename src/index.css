@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,92 +6,121 @@
 
 @layer base {
   :root {
-    --background: 40 33% 96%;
-    --foreground: 20 15% 15%;
-    --card: 40 40% 98%;
-    --card-foreground: 20 15% 15%;
-    --popover: 40 40% 98%;
-    --popover-foreground: 20 15% 15%;
-    --primary: 345 40% 30%;
-    --primary-foreground: 40 33% 96%;
-    --secondary: 40 40% 90%;
-    --secondary-foreground: 20 15% 25%;
-    --muted: 40 20% 92%;
-    --muted-foreground: 20 10% 45%;
-    --accent: 43 60% 50%;
-    --accent-foreground: 20 15% 10%;
-    --border: 40 25% 85%;
-    --input: 40 25% 85%;
-    --ring: 345 40% 30%;
-    --radius: 0.5rem;
-    --gold: 43 45% 60%;
+    --background: 210 28% 98%;
+    --foreground: 211 34% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 211 34% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 211 34% 16%;
+    --primary: 211 57% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 25% 92%;
+    --secondary-foreground: 211 34% 20%;
+    --muted: 210 18% 93%;
+    --muted-foreground: 211 12% 43%;
+    --accent: 43 61% 52%;
+    --accent-foreground: 345 26% 14%;
+    --border: 210 20% 86%;
+    --input: 210 20% 86%;
+    --ring: 211 57% 32%;
+    --radius: 0.875rem;
+    --gold: 43 56% 52%;
   }
 
   .dark {
-    --background: 20 15% 10%;
-    --foreground: 40 20% 90%;
-    --card: 20 15% 14%;
-    --card-foreground: 40 20% 90%;
-    --primary: 43 60% 55%;
-    --primary-foreground: 20 15% 10%;
-    --secondary: 20 12% 20%;
-    --secondary-foreground: 40 20% 85%;
-    --muted: 20 10% 18%;
-    --muted-foreground: 40 15% 60%;
-    --accent: 43 50% 45%;
-    --border: 20 12% 22%;
+    --background: 211 30% 9%;
+    --foreground: 210 25% 92%;
+    --card: 211 25% 12%;
+    --card-foreground: 210 25% 92%;
+    --popover: 211 25% 12%;
+    --popover-foreground: 210 25% 92%;
+    --primary: 43 67% 58%;
+    --primary-foreground: 211 30% 9%;
+    --secondary: 211 18% 18%;
+    --secondary-foreground: 210 20% 88%;
+    --muted: 211 15% 17%;
+    --muted-foreground: 210 13% 65%;
+    --accent: 42 57% 48%;
+    --accent-foreground: 345 22% 10%;
+    --border: 211 14% 23%;
+    --input: 211 14% 23%;
+    --ring: 42 64% 56%;
+    --gold: 42 64% 56%;
   }
-}
 
-@layer base {
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
   body {
     @apply bg-background text-foreground antialiased;
+    min-width: 320px;
     font-family: 'Lora', serif;
+    background-image:
+      radial-gradient(circle at 8% 18%, hsl(var(--gold) / 0.06), transparent 26rem),
+      radial-gradient(circle at 92% 70%, hsl(var(--primary) / 0.05), transparent 30rem);
   }
-  h1, h2, h3, h4 {
-    @apply font-display;
-  }
+  button, input { font-family: 'Inter', sans-serif; }
+  h1, h2, h3, h4 { @apply font-display; }
 }
 
 @layer components {
+  .hero-shell {
+    @apply relative min-h-[600px] overflow-visible bg-[#123653];
+    background-image:
+      linear-gradient(135deg, rgba(18, 61, 92, 0.97), rgba(8, 35, 57, 0.99)),
+      radial-gradient(circle at center, rgba(218, 180, 83, 0.14), transparent 45%);
+  }
+
+  .hero-shell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M32 0v64M0 32h64' stroke='%23fff' stroke-width='.35'/%3E%3Ccircle cx='32' cy='32' r='13' fill='none' stroke='%23fff' stroke-width='.35'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  .hero-glow { @apply pointer-events-none absolute rounded-full blur-3xl; }
+  .hero-glow-left { @apply -left-32 top-24 h-80 w-80 bg-[#4c8bb5]/20; }
+  .hero-glow-right { @apply -right-32 bottom-10 h-96 w-96 bg-[#d8b65b]/10; }
+
+  .feature-card {
+    @apply flex items-start gap-4 rounded-xl border border-border/60 bg-card/70 p-4 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md;
+  }
+
+  .music-player {
+    @apply fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-2xl border border-border/70 bg-card/95 px-3 py-2.5 shadow-xl backdrop-blur-xl sm:bottom-6 sm:right-6;
+  }
+  .music-player-icon { @apply grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary; }
+  .music-player-button { @apply grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring; }
+
+  .cnbb-section {
+    @apply mx-auto my-5 max-w-3xl rounded-[1.75rem] border border-border/70 bg-card/90 px-5 py-10 shadow-[0_18px_60px_-42px_rgba(52,18,28,0.5)] sm:px-10 sm:py-12;
+  }
+
+  .cnbb-section-title {
+    @apply mb-7 text-center font-ui text-[11px] font-bold uppercase tracking-[0.25em] text-gold;
+  }
+
   .reading-text {
-    @apply font-body text-base md:text-[17px] leading-[1.8] max-w-[680px] mx-auto text-foreground/90;
+    @apply mx-auto max-w-[680px] font-body text-base leading-[1.9] text-foreground/90 md:text-[17px];
   }
 
   .cnbb-verse-num {
-    @apply text-[0.7em] font-bold align-top mr-1 select-none text-gold;
+    @apply mr-1 select-none align-top text-[0.68em] font-bold text-gold;
     vertical-align: super;
   }
 
   .gospel-container {
-    @apply border-l-[3px] border-gold pl-6 py-4 my-10 bg-[#faf7f2] dark:bg-white/5 rounded-r-lg;
+    @apply mx-auto my-4 max-w-[680px] rounded-2xl border border-gold/20 bg-gradient-to-br from-amber-50/80 to-card p-6 shadow-inner dark:from-amber-950/10 sm:p-9;
   }
 
-  .liturgy-divider {
-    @apply w-10 h-[1px] bg-gold/60 mx-auto my-8;
-  }
+  .liturgy-divider { @apply mx-auto my-7 h-px w-12 bg-gold/60; }
+  .psalm-refrain { @apply mb-6 font-display text-lg font-bold text-foreground md:text-xl; }
+  .psalm-verse { @apply mb-4 border-l border-gold/30 pl-5 italic text-foreground/80; }
+  .cnbb-prayer-label { @apply mb-2 font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-gold; }
+}
 
-  .cnbb-section {
-    @apply py-12 max-w-2xl mx-auto border-b border-border/30 last:border-0;
-  }
-
-  .cnbb-section-title {
-    @apply text-center font-display text-xs font-bold tracking-[0.25em] mb-8 uppercase text-gold;
-  }
-
-  .psalm-refrain {
-    @apply font-display text-lg md:text-xl font-bold mb-6 text-foreground;
-  }
-
-  .psalm-verse {
-    @apply pl-4 italic mb-4 text-foreground/80;
-  }
-
-  .nav-btn {
-    @apply px-5 py-2 rounded-full bg-secondary/50 text-secondary-foreground text-sm font-medium hover:bg-gold hover:text-white transition-all duration-300 flex items-center gap-2;
-  }
-
-  .crucifix-svg {
-    @apply transition-transform duration-300 ease-in-out hover:scale-110 cursor-pointer text-gold;
-  }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

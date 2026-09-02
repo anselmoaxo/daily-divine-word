@@ -8,12 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { getLiturgicalColorClass } from "@/lib/liturgy-api";
 
+const CONSENT_VERSION = "2026-09-01";
+
 interface Props {
   liturgicalColor: string;
 }
 
 export default function WhatsAppRegistration({ liturgicalColor }: Props) {
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -49,36 +52,34 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
     setPhone(formatted);
   };
 
-  // Envio seguro pelo servidor do app, sem expor os webhooks no navegador
-  const sendDirectToN8N = async (actionType: "subscribe" | "unsubscribe", phoneNumber: string) => {
-    const endpoint = actionType === "unsubscribe" ? "/api/cancelamento" : "/api/cadastro";
-    const payload =
-      actionType === "unsubscribe"
-        ? { phone: phoneNumber }
-        : {
-            name: name.trim(),
-            phone: phoneNumber,
-            email: email.trim(),
-            city: city.trim(),
-            birthdate,
-            honeypot,
-          };
-
-    const response = await fetch(endpoint, {
+  // Envio seguro para a API do próprio app; o n8n apenas lê os registros no Supabase.
+  const sendToApi = async (phoneNumber: string) => {
+    const response = await fetch("/api/cadastro", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        name: name.trim(),
+        phone: phoneNumber,
+        email: email.trim(),
+        city: city.trim(),
+        birthdate,
+        consent,
+        consentVersion: CONSENT_VERSION,
+        honeypot,
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Erro ao conectar com o servidor de envio (Status: ${response.status})`);
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.statusMessage || (response.status === 409 ? "Este telefone já está cadastrado para outro cliente." : `Erro ao salvar cadastro (Status: ${response.status})`));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
     if (!consent) {
       toast.error("Você precisa aceitar os termos para continuar.");
       return;
@@ -92,7 +93,9 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     // Proteção Honeypot simples no frontend
     if (honeypot) {
-      toast.success("Cadastro enviado com sucesso! ✨");
+      const message = "Seja bem-vindo(a)! Sua inscrição foi realizada com sucesso. Você receberá a Liturgia Diária todos os dias, às 8h.";
+      setFeedback({ type: "success", message });
+      toast.success(message);
       setPhone("");
       setName("");
       return;
@@ -100,39 +103,23 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
 
     setLoading(true);
     try {
-      await sendDirectToN8N("subscribe", digitsOnly);
-      toast.success("Cadastro enviado com sucesso! ✨");
+      await sendToApi(digitsOnly);
+      const message = "Seja bem-vindo(a)! Sua inscrição foi realizada com sucesso. Você receberá a Liturgia Diária todos os dias, às 8h.";
+      setFeedback({ type: "success", message });
+      toast.success(message);
       setPhone("");
       setName("");
       setEmail("");
       setCity("");
       setBirthdate("");
       setConsent(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao enviar cadastro:", error);
-      toast.error(error.message || "Erro ao enviar dados. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUnsubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const digitsOnly = phone.replace(/\D/g, "");
-    if (digitsOnly.length < 10) {
-      toast.error("Por favor, insira um número de telefone válido.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await sendDirectToN8N("unsubscribe", digitsOnly);
-      toast.success("Solicitação de cancelamento enviada com sucesso!");
-      setPhone("");
-      setShowUnsubscribe(false);
-    } catch (error: any) {
-      console.error("Erro ao enviar cancelamento:", error);
-      toast.error("Erro ao processar cancelamento. Tente novamente.");
+      const message = error instanceof Error && error.message === "Este telefone já está cadastrado para outro cliente."
+        ? error.message
+        : "Não foi possível concluir a solicitação. Tente novamente.";
+      setFeedback({ type: "error", message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -143,6 +130,9 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
       <div className="absolute -top-12 -right-12 w-32 h-32 bg-gold/5 rounded-full blur-3xl" />
       
       <div className="max-w-lg mx-auto text-center relative z-10">
+        <div role="status" aria-live="polite" aria-atomic="true" className={`mb-5 min-h-0 rounded-xl px-4 py-3 text-sm font-medium ${feedback ? (feedback.type === "success" ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" : "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-200") : ""}`}>
+          {feedback?.message}
+        </div>
         <div className="inline-flex p-4 rounded-2xl bg-green-100 dark:bg-green-900/30 text-green-600 mb-6 shadow-inner">
           <MessageCircle size={28} />
         </div>
@@ -253,7 +243,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
                   required
                 />
                 <label htmlFor="consent" className="text-[10px] text-muted-foreground leading-relaxed cursor-pointer select-none">
-                  Concordo em receber a liturgia diária. Seus dados estão protegidos pela LGPD. Leia nossa{" "}
+                  Autorizo o uso dos meus dados para receber a liturgia diária pelo WhatsApp, conforme nossa{" "}
                   <Link to="/politica-de-privacidade" className="underline text-gold hover:text-gold/80 font-semibold">
                     Política de Privacidade
                   </Link>.
@@ -266,12 +256,12 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
                 disabled={loading}
               >
                 {loading ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2" />}
-                Quero receber a liturgia!
+                {loading ? "Aguarde…" : "Quero receber a liturgia!"}
               </Button>
 
               <div className="space-y-1.5 pt-2">
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
-                  <Lock size={10} className="text-gold" /> Seus dados estão seguros e protegidos.
+                  <Lock size={10} className="text-gold" /> Seus dados são enviados com conexão segura e usados para este serviço.
                 </p>
               </div>
             </form>
@@ -301,28 +291,16 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleUnsubscribe} className="space-y-5 text-left bg-card p-8 rounded-2xl border border-destructive/20 animate-fade-in shadow-2xl">
-            <div className="space-y-2">
-              <Label htmlFor="unsub-phone" className="text-[10px] font-bold uppercase tracking-wider opacity-60">Número para remover</Label>
-              <Input 
-                id="unsub-phone"
-                type="tel"
-                placeholder="(00) 00000-0000" 
-                value={phone}
-                onChange={handlePhoneChange}
-                className="bg-background h-11"
-                required
-              />
+          <div className="space-y-5 text-left bg-card p-8 rounded-2xl border border-destructive/20 animate-fade-in shadow-2xl">
+            <div className="flex items-start gap-3">
+              <XCircle className="mt-0.5 shrink-0 text-destructive" aria-hidden="true" />
+              <div className="space-y-2">
+                <h3 className="font-semibold text-foreground">Cancelar com segurança</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Responda <strong>CANCELAR</strong> pelo mesmo WhatsApp em que você recebe a Liturgia Diária. Assim, confirmamos que o pedido partiu do titular do número sem expor seus dados neste site.
+                </p>
+              </div>
             </div>
-            <Button 
-              type="submit" 
-              variant="destructive"
-              className="w-full py-6 font-bold rounded-xl"
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="animate-spin mr-2" /> : <XCircle className="mr-2" />}
-              CONFIRMAR CANCELAMENTO
-            </Button>
             <button 
               type="button"
               onClick={() => {
@@ -333,7 +311,7 @@ export default function WhatsAppRegistration({ liturgicalColor }: Props) {
             >
               Voltar para o cadastro
             </button>
-          </form>
+          </div>
         )}
       </div>
     </section>
